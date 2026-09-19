@@ -18,6 +18,10 @@ interface TossRewardAdProps {
   onRewarded?: () => void;
   /** 광고 로드 타임아웃 (ms). 초과 시 자동 언락 */
   timeoutMs?: number;
+  /** 지정하면 로드/재생 실패 시 자동 언락 대신 이 콜백을 호출 (ResultAdGate용) */
+  onLoadFailed?: () => void;
+  /** 지정하면 시청 중 닫힘 시 자동 언락 대신 이 콜백을 호출 (ResultAdGate용) */
+  onDismissed?: () => void;
 }
 
 /**
@@ -41,6 +45,8 @@ export function TossRewardAd({
   buttonText = "광고 보고 확인하기",
   onRewarded,
   timeoutMs = 15000,
+  onLoadFailed,
+  onDismissed,
 }: TossRewardAdProps) {
   const [unlocked, setUnlocked] = useState(false);
   const [isShowing, setIsShowing] = useState(false);
@@ -54,12 +60,17 @@ export function TossRewardAd({
         slotId,
         onEvent: () => setAdLoaded(true),
         onError: () => {
+          if (onLoadFailed) return onLoadFailed();
           // Load failed (e.g., local browser) — auto-unlock
           setUnlocked(true);
           onRewarded?.();
         },
       } as Parameters<typeof loadFullScreenAd>[0]);
     } catch {
+      if (onLoadFailed) {
+        onLoadFailed();
+        return;
+      }
       // SDK not available (e.g., jsdom) — auto-unlock
       setUnlocked(true);
       onRewarded?.();
@@ -89,6 +100,11 @@ export function TossRewardAd({
         slotId,
         onEvent: (event: { type?: string }) => {
           if (timeoutRef.current) clearTimeout(timeoutRef.current);
+          if (onDismissed && event?.type === "dismissed") {
+            setIsShowing(false);
+            onDismissed();
+            return;
+          }
           // event.type === 'rewarded' indicates completion (SDK version-dependent)
           // For safety, unlock on any event that finishes the ad
           setUnlocked(true);
@@ -102,6 +118,11 @@ export function TossRewardAd({
         },
         onError: () => {
           if (timeoutRef.current) clearTimeout(timeoutRef.current);
+          if (onLoadFailed) {
+            setIsShowing(false);
+            onLoadFailed();
+            return;
+          }
           // Playback failed — unlock as fallback
           setUnlocked(true);
           setIsShowing(false);

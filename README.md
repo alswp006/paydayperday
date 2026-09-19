@@ -1,103 +1,41 @@
-🇺🇸 [한국어](./README.ko.md)
+# PaydayPerDay
 
-# PaydayPerDay — Smart Daily Budget Calculator
-
-A Toss mini-app that calculates your daily spending budget from payday to payday. Set your payday and monthly budget once, then track daily spending with an auto-rolling budget that redistributes savings or overages to remaining days.
-
-For Korean users aged 20–30 who struggle with overspending after payday and need a quick daily spending limit to manage cash flow until the next paycheck.
-
-## Features
-
-- 📅 **Budget Setup** — Enter payday (1–31) and monthly budget; app calculates daily limits and D-day countdown
-- 💰 **Quick Spending Entry** — Log today's spending once; budget auto-recalculates for tomorrow based on balance carry-over
-- 📊 **Daily Settlement Report** — See today's balance, tomorrow's budget, and weekly compliance streak (requires rewarded ad view)
-- ✓ **Weekly Compliance Tracker** — Track success/fail/none status for each day of the week; continuous budget-adherence streak counter
-- 💾 **Local Persistence** — All data stored securely on device via localStorage; no backend required
+> **이번 보완 요약**: 기존 내용은 그대로 두고, 새로 넣은 AC와 Task 항목에만 **[보완]** 표시를 달았습니다. 추가한 AC는 7개입니다: F4-AC-6, F4-AC-7, AC-INPUT-3, AC-STORAGE-1, AC-AD-FAIL, AC-REWARD-2, AC-NETWORK. 새 Task는 2개입니다: T14, T15. - **한줄 요약**: 다음 월급날까지 D-11, 오늘 쓸 수 있는 돈은 38,000원. 매일 열어 보는 하루 생활비 계기판 - **문제**: 월급이 들어오면 돈을 많이 쓰고 월말에 돈이 모자란다. 남은 돈을 남은 날짜로 나눠 하루 예산을 매일 계산해 주는 도구가 없다.
 
 ## Tech Stack
 
-- **Frontend**: React 18 + Vite
-- **Router**: React Router 7
-- **UI Components**: TDS Mobile (Toss Design System)
-- **Native SDK**: @apps-in-toss/web-framework (haptic feedback, reward ads, native storage)
-- **Styling**: Emotion (CSS-in-JS)
-- **Language**: TypeScript
-- **Storage**: browser localStorage
-- **Testing**: Vitest + @testing-library/react + Playwright
+- React 18.0.0
+- TypeScript
+- Vitest
+
+## Routes
+
+| Path | Description |
+|------|-------------|
+| `/Home` | Home |
+| `/Result` | Result |
 
 ## Getting Started
 
-### Prerequisites
-- Node.js 18+ (npm or pnpm)
+```bash
+pnpm install
+pnpm dev
+```
 
-### Installation
+## Development
 
 ```bash
-npm install
+pnpm typecheck    # Type checking
+pnpm test         # Run tests
+pnpm build        # Production build
 ```
 
-### Build for Production
+## Design Documents
 
-```bash
-npx vite build
-```
+See `.ai-factory/` directory for full design artifacts:
+- `prd.md` — Product Requirements Document
+- `spec.md` — Technical Specification
+- `task.md` — Epic/Task Breakdown
 
-Outputs optimized static bundle to `dist/`.
-
-### Deploy to Toss (App-in-Toss)
-
-```bash
-npx ait build
-```
-
-Then follow the [Toss Developer Console](https://console.tossmini.com) review flow to deploy to production.
-
-### Run Tests
-
-```bash
-npx vitest run           # Unit tests
-npm run test:visual      # Visual regression (Playwright)
-npm run typecheck        # TypeScript check
-```
-
-## Environment Variables
-
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `VITE_AIT_APP_NAME` | App name registered in Toss console (set in `apps-in-toss.config.ts`) | Yes |
-
-## Project Structure
-
-```
-src/
-├── pages/               # Route screens (Home, Result)
-├── components/          # Reusable UI components (pre-built TDS wrappers)
-├── lib/
-│   ├── calculator.ts    # Daily budget math (todayBudget, carry-over)
-│   ├── streak.ts        # Weekly compliance & streak calculation
-│   ├── budgetStore.ts   # localStorage + quota handling
-│   ├── date.ts          # Date utilities (cycleStart, cycleEnd, D-day)
-│   ├── types.ts         # Shared TypeScript interfaces
-│   └── utils.ts         # Helpers (currency formatting, etc.)
-└── __tests__/           # Unit & component tests
-
-.ai-factory/
-├── spec.md              # Full product specification
-├── apps-in-toss-essential.txt  # Verified SDK API reference
-└── tds-reference.txt    # TDS component documentation
-```
-
-## Deployment
-
-PaydayPerDay is deployed as a **Toss mini-app** (App-in-Toss). After building locally:
-
-1. Run `npx ait build` to create the Toss-compatible bundle
-2. Submit the bundle through the [Toss Developer Console](https://console.tossmini.com)
-3. Pass Toss review (age 19+, no external links, no console errors, CORS-free, dark mode support)
-4. App is hosted on Toss CDN and delivered via QR code / deep link (`intoss://paydayperday`)
-
-Note: local dev server (`npm run dev`) is not documented because verification happens via `npm run test:visual` (Playwright) and production build only.
-
-## License
-
-MIT
+---
+Built with [AI Factory](https://github.com/alswp006/ai-factory) · Last synced: 2026-09-19

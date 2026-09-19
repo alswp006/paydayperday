@@ -33,7 +33,7 @@ export interface AppResult {
   todayBudget: number;
   todaySpent: number;
   todayLeft: number;
-  cycleOverspent: boolean;
+  cycleOverspent: number;
   tomorrowBudget: number | null;
   yesterdayCarry: number | null;
   week: WeekDay[];

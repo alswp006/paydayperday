@@ -5,7 +5,9 @@ import type {
   DayRecord,
   DateKey,
 } from "@/lib/types";
-import { addDays, diffDays } from "@/lib/date";
+import { addDays } from "@/lib/date";
+import { computeDaily } from "@/lib/calculator";
+import { weekStatus, calcStreak } from "@/lib/streak";
 
 /**
  * Packet 0002: Core Logic — Budget Calculator & Streak
@@ -86,8 +88,12 @@ describe("AC-1: Daily budget calculation with carryover", () => {
     expect(result.todayBudget).toBe(100000);
 
     // Simulate spending 120000
-    const resultWithSpend = computeDaily(settings, {}, today);
-    resultWithSpend.todaySpent = 120000;
+    const resultWithSpend = computeDaily(
+      settings,
+      { [today]: makeRecord(today, [120000], 100000) },
+      today,
+    );
+    expect(resultWithSpend.todaySpent).toBe(120000);
     expect(resultWithSpend.todayLeft).toBe(-20000);
 
     // tomorrowBudget = floor((500000-120000)/4) = floor(95000) = 95000
@@ -321,65 +327,3 @@ describe("AC-4: Week status calculation", () => {
     expect(pastDays.every((d) => d.status !== "future")).toBe(true);
   });
 });
-
-// ── Placeholder implementations for type checking ──
-// These will be replaced by actual implementations in src/lib/calculator.ts and src/lib/streak.ts
-
-/**
- * Computes daily budget allocation, carryover, and budget status.
- *
- * Rules:
- * - remainingDays = diffDays(cycleEnd, today)
- * - spentBefore = sum of entries for dates [cycleStart, today)
- * - todayBudget = floor(max(0, (cycleBudget - spentBefore) / remainingDays) / 100) * 100
- * - tomorrowBudget = remainingDays === 1 ? null : floor(max(0, (cycleBudget - spentBefore - todaySpent) / (remainingDays - 1)) / 100) * 100
- * - yesterdayCarry = (yesterday exists in records AND yesterday >= cycleStart) ? yesterdayBudget - sum(yesterdayEntries) : null
- * - cycleOverspent = max(0, spentBefore - cycleBudget)
- */
-function computeDaily(
-  settings: BudgetSettings,
-  records: RecordMap,
-  today: DateKey,
-): Omit<
-  import("@/lib/types").AppResult,
-  "week" | "streak"
-> {
-  throw new Error(
-    "Not implemented — test will fail until src/lib/calculator.ts is written",
-  );
-}
-
-/**
- * Calculates week status for 7 days (Mon-Sun containing today).
- *
- * Status rules:
- * - future: date > today
- * - success: date <= today, record exists, sum(entries) <= budget
- * - fail: date <= today, record exists, sum(entries) > budget
- * - none: date <= today, no record
- */
-function weekStatus(
-  records: RecordMap,
-  today: DateKey,
-): import("@/lib/types").WeekDay[] {
-  throw new Error(
-    "Not implemented — test will fail until src/lib/streak.ts is written",
-  );
-}
-
-/**
- * Calculates current streak of consecutive successful days ending yesterday or today.
- *
- * Rules:
- * - Scan backward from yesterday
- * - success: record exists, sum(entries) <= budget (or entries = [])
- * - fail: record exists, sum(entries) > budget → streak = 0
- * - none: no record → stop counting
- * - If today has a record and it's fail, return 0 immediately
- * - If today has no record, continue counting from yesterday
- */
-function calcStreak(records: RecordMap, today: DateKey): number {
-  throw new Error(
-    "Not implemented — test will fail until src/lib/streak.ts is written",
-  );
-}

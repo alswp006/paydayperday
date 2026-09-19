@@ -50,8 +50,60 @@ export type normalizeNumberInputFn = (input: string) => number;
 
 ## Shared Types Contract (IMPORT these, do NOT redefine)
 ```typescript
-// Domain types — add your app-specific types here
-export {};
+// Domain types — 날짜 키는 기기 로컬 시간대 기준 'YYYY-MM-DD'
+export type DateKey = string;
+
+export interface BudgetSettings {
+  /** 월급일 1~31 */
+  paydayDay: number;
+  /** 사이클 예산 1,000~100,000,000 */
+  cycleBudget: number;
+  cycleStart: DateKey;
+  cycleEnd: DateKey;
+}
+
+export interface DayRecord {
+  date: DateKey;
+  entries: number[];
+  budget: number;
+}
+
+export type RecordMap = Record<DateKey, DayRecord>;
+
+export interface AppInput {
+  settings: BudgetSettings;
+  todaySpent: number;
+}
+
+export interface WeekDay {
+  date: DateKey;
+  status: 'success' | 'fail' | 'none' | 'future';
+}
+
+export interface AppResult {
+  remainingDays: number;
+  todayBudget: number;
+  todaySpent: number;
+  todayLeft: number;
+  cycleOverspent: boolean;
+  tomorrowBudget: number | null;
+  yesterdayCarry: number | null;
+  week: WeekDay[];
+  streak: number;
+}
+
+export interface RouteState {
+  result: AppResult;
+  input: AppInput;
+}
+
+export type SaveResult = { ok: true } | { ok: false; reason: 'quota' | 'unknown' };
+
+export const STORAGE_KEYS = {
+  settings: 'ppd:settings',
+  records: 'ppd:records',
+  adUnlockedDate: 'ppd:adUnlockedDate',
+} as const;
 
 ```
 
@@ -75,6 +127,9 @@ export {};
     TossRewardAd.tsx
   hooks/
   lib/
+    contract.ts
+    date.test.ts
+    date.ts
     storage.ts
     types.ts
     utils.ts
@@ -90,7 +145,10 @@ export {};
   vite-env.d.ts
 
 ### Exports (src/lib/)
+- contract.ts: export type Budget =; export type Transaction =; export type StreakData =; export type formatCurrencyFn = (amountKrw: number) => string; export type formatDateFn = (date: string, format?: string) => string; export type calculateBudgetStatusFn = (budgetKrw: number, spentKrw: number) =>; export type sumDailySpentFn = (transactions: Transaction[], endDate: string) => number; export type calculateCurrentStreakFn = (budget: Budget, transactions: Transaction[]) => StreakData
+- date.ts: export function toDateKey(d: Date): DateKey; export function addDays(k: DateKey, n: number): DateKey; export function diffDays(a: DateKey, b: DateKey): number; export function nextPayday(today: DateKey, day: number): DateKey; export function weekKeys(today: DateKey): DateKey[]; export function formatDate(date: string, format = 'M월 D일'): string
 - storage.ts: export function getItem<T>(key: string): T | null; export function setItem<T>(key: string, value: T): void; export function removeItem(key: string): void
+- types.ts: export type DateKey = string; export interface BudgetSettings; export interface DayRecord; export type RecordMap = Record<DateKey, DayRecord>; export interface AppInput; export interface WeekDay; export interface AppResult; export interface RouteState
 - utils.ts: export function cn(...classes: (string | boolean | undefined | null)[]): string; export function formatNumber(n: number): string; export function formatCurrency(n: number, currency = 'KRW'): string
 
 ### Components (src/components/)
@@ -108,76 +166,10 @@ export {};
 - SummaryHero.tsx: SummaryHero
 - TossPurchase.tsx: TossPurchase
 - TossRewardAd.tsx: TossRewardAd
+
+### Module Dependencies (import graph)
+  lib/date.ts → imports: lib/types
 CRITICAL: Before creating any new function, type, or component, check the list above. If something similar exists, import and use it.
 
-## Available exports from existing files
-// src/App.tsx
-export default function App() {
-
-// src/components/AdSlot.tsx
-export function AdSlot({ adGroupId, className, variant, theme }: AdSlotProps) {
-
-// src/components/Amount.tsx
-export function Amount({
-
-// src/components/BottomCTA.tsx
-export function SubmitFooter({
-export function ButtonStack({
-
-// src/components/Card.tsx
-export function Card({
-
-// src/components/CountUp.tsx
-export function CountUp({
-
-// src/components/FloatingTabBar.tsx
-export type TabItem = {
-export function FloatingTabBar({ items }: { items: TabItem[] }) {
-
-// src/components/MiniBar.tsx
-export function MiniBar({
-
-// src/components/PageShell.tsx
-export function PageShell({ children, style }: { children: ReactNode; style?: CSSProperties }) {
-
-// src/components/ScreenScaffold.tsx
-export function ScreenScaffold({
-
-// src/components/Sparkline.tsx
-export function Sparkline({
-
-// src/components/StateView.tsx
-export function EmptyState({
-export function LoadingState({
-
-// src/components/SummaryHero.tsx
-export function SummaryHero({
-
-// src/components/TossPurchase.tsx
-export interface TossPurchaseResult {
-export function TossPurchase({
-
-// src/components/TossRewardAd.tsx
-export function TossRewardAd({
-
-// src/lib/contract.ts
-export type Budget = { id: string; amountKrw: number; date: string; endDate: string };
-export type Transaction = { id: string; date: string; amountKrw: number; memo?: string };
-export type StreakData = { currentDays: number; longestDays: number; lastCheckDate: string };
-export type formatCurrencyFn = (amountKrw: number) => string;
-export type formatDateFn = (date: string, format?: string) => string;
-export type calculateBudgetStatusFn = (budgetKrw: number, spentKrw: number) => { remainingKrw: number; percentUsed: number };
-export type sumDailySpentFn = (transactions: Transaction[], endDate: string) => number;
-export type calculateCurrentStreakFn = (budget: Budget, transactions: Transaction[]) => StreakData;
-export type calculateDailyBudgetFn = (budgetKrw: number, endDate: st
-
-## Memory Index (자동 학습 — 힌트로만 사용, 실제 코드 확인 필수)
-
-Available topics: deploy(4), general(13), testing(2), ui(3)
-
-Key lessons (verify against actual code before applying):
-- [general] 파일 생성 전 디렉토리 구조 확인 — mkdir -p로 경로 보장 (60% · 타 앱 1회 — 맹신 금지)
-- [general] 화면·라우팅 등 소비자 모듈은 그것이 import하는 생산자 모듈이 병합된 뒤에만 병합하고, 순서를 지킬 수 없으면 소비자 병합과 동시에 최소 플레이스홀더를 만들어 매 병합 직후 타입체크와 빌드가 항상 통과하도록 유지하라. (60% · 타 앱 1회 — 맹신 금지)
-- [general] 전역 라우팅·탭바·Provider 배선은 개별 화면보다 먼저(초반 20% 안에) 완료하고 미구현 화면은 스텁 라우트로 연결해, 시간 예산이 소진돼도 앱이 항상 실행 가능한 상태를 유지하라. (60% · 타 앱 1회 — 맹신 금지)
-- [general] 저장·데이터 접근 등 기반 계층 패킷은 이를 import 하는 화면 패킷보다 반드시 먼저 완료·병합하고, 미완료면 상위 화면 패킷 병합을 차단하라 — 빈 기반 모듈 하나가 전 라우트 스모크를 무너뜨린다. (60% · 타 앱 1회 — 맹신 금지)
-- [general] 외부에서 들어온 모든 값(라우터 state, 로컬 저장소, 부분 입력 폼)은 사용 직전에 배열·객체 기본값으로 정규화하고, 테이블/맵 조회 결과는 존재 확인 후에만 하위 속성이나 length에 접근하라. (60% · 타 앱 1회 — 맹신 금지)
+## Already Implemented (do NOT duplicate or overwrite)
+- 0001: Types & Date Utils (files: src/lib/types.ts, src/lib/date.ts, src/lib/date.test.ts)

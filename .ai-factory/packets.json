@@ -1,0 +1,371 @@
+[
+  {
+    "id": "0001",
+    "title": "Types & Date Utils",
+    "epic": "Epic 1: Data Layer",
+    "task": {
+      "description": "Data Model에 정의된 모든 타입(DateKey, BudgetSettings, DayRecord, RecordMap, AppInput, AppResult, RouteState, SaveResult)과 localStorage 키 상수를 src/lib/types.ts에 export합니다. 로컬 시간대 기준 날짜 유틸 toDateKey, addDays, diffDays, nextPayday(말일 보정 포함), weekKeys(월~일)를 순수 함수로 구현하고 vitest 테스트를 작성합니다.",
+      "acceptance_criteria": [
+        "nextPayday('2026-09-20',25)는 '2026-09-25', ('2026-09-20',10)은 '2026-10-10', ('2026-09-25',25)는 '2026-10-25', ('2026-09-20',31)은 '2026-09-30'을 반환한다",
+        "nextPayday('2028-02-10',31)은 '2028-02-29'를 반환하고, diffDays('2026-10-25','2026-09-25')는 30을 반환한다",
+        "weekKeys('2026-09-20')은 '2026-09-14'(월)부터 '2026-09-20'(일)까지 7개 키를 반환하고, 마지막 키가 today다",
+        "types.ts가 STORAGE_KEYS { settings:'ppd:settings', records:'ppd:records', adUnlockedDate:'ppd:adUnlockedDate' }와 SaveResult 타입을 export하고 tsc --noEmit이 통과한다"
+      ]
+    },
+    "covers": [
+      "F1-AC-3",
+      "F1-AC-4",
+      "F2-AC-1",
+      "F2-AC-5",
+      "F3-AC-4",
+      "AC-STORAGE-1"
+    ],
+    "files": [
+      "src/lib/types.ts",
+      "src/lib/date.ts",
+      "src/lib/date.test.ts"
+    ],
+    "definition_of_done": [
+      "Data Model의 모든 타입과 상수를 export한다",
+      "date.test.ts의 F1-AC-4 4개 케이스, 윤년 케이스, diffDays 케이스가 통과한다",
+      "vitest가 없으면 devDependency로 추가한다",
+      "tsc --noEmit이 통과한다"
+    ],
+    "depends_on": [],
+    "db_schema": "localStorage 키: 'ppd:settings' → BudgetSettings { paydayDay:number(1~31), cycleBudget:number(1,000~100,000,000), cycleStart:DateKey, cycleEnd:DateKey }; 'ppd:records' → RecordMap = Record<DateKey, DayRecord { date, entries:number[], budget:number }> (최근 60일만 보관); 'ppd:adUnlockedDate' → DateKey",
+    "api_contract": "export type DateKey = string; export interface BudgetSettings; DayRecord; RecordMap; AppInput { settings; todaySpent }; AppResult { remainingDays; todayBudget; todaySpent; todayLeft; cycleOverspent; tomorrowBudget:number|null; yesterdayCarry:number|null; week:{date;status:'success'|'fail'|'none'|'future'}[]; streak }; RouteState { result: AppResult; input: AppInput }; SaveResult = {ok:true}|{ok:false;reason:'quota'|'unknown'}; toDateKey(d:Date):DateKey; addDays(k:DateKey,n:number):DateKey; diffDays(a:DateKey,b:DateKey):number; nextPayday(today:DateKey,day:number):DateKey; weekKeys(today:DateKey):DateKey[]",
+    "dependencies": [
+      "vitest (devDependency, 없을 때만)"
+    ],
+    "ui_requirements": "UI 없음. 날짜 키는 모두 기기 로컬 시간대 기준 'YYYY-MM-DD' 형식이에요(UTC 변환 금지)."
+  },
+  {
+    "id": "0002",
+    "title": "Core Logic: Budget Calculator & Streak",
+    "epic": "Epic 1: Data Layer",
+    "task": {
+      "description": "순수 함수 computeDaily(settings, records, today)로 remainingDays, todayBudget(floor100), todaySpent, todayLeft, cycleOverspent, tomorrowBudget, yesterdayCarry를 계산합니다. weekStatus(records, today)와 calcStreak(records, today)로 이번 주 7칸 상태와 연속 준수 일수를 계산하고, 두 모듈을 하나의 테스트 파일로 검증합니다.",
+      "acceptance_criteria": [
+        "총액 500,000원, remainingDays 5, 이전 지출 0원이면 todayBudget은 100,000이다. 오늘 120,000원을 쓰면 todayLeft는 -20,000, tomorrowBudget은 95,000이다. 오늘 55,000원을 쓰면 tomorrowBudget은 111,200이다",
+        "이전 지출이 총액을 넘으면 todayBudget은 0이고 cycleOverspent는 0보다 크다. remainingDays가 1이면 tomorrowBudget은 null이다. 어제가 cycleStart 이전이면 yesterdayCarry는 null이다",
+        "streak: 오늘 기록 없음 + 어제까지 3일 success면 3, 오늘 fail이면 0, none을 만나면 멈춘다. entries가 []인 날은 success다",
+        "today '2026-09-20'(일)이면 week[6]이 오늘이고 week[0~5]의 status는 future가 아니다. 오늘 이후 날짜는 future다"
+      ]
+    },
+    "covers": [
+      "F2-AC-2",
+      "F2-AC-3",
+      "F2-AC-4",
+      "F3-AC-5",
+      "F3-AC-6",
+      "F4-AC-1",
+      "F4-AC-2"
+    ],
+    "files": [
+      "src/lib/calculator.ts",
+      "src/lib/streak.ts",
+      "src/lib/logic.test.ts"
+    ],
+    "definition_of_done": [
+      "computeDaily, weekStatus, calcStreak를 export한다",
+      "floor100 = Math.floor(x/100)*100을 적용한다",
+      "음수 예산은 0으로 보정한다(tomorrowBudget 포함)",
+      "logic.test.ts의 모든 케이스가 통과한다"
+    ],
+    "depends_on": [
+      "0001"
+    ],
+    "db_schema": "읽기 전용: BudgetSettings, RecordMap",
+    "api_contract": "computeDaily(settings:BudgetSettings, records:RecordMap, today:DateKey): Omit<AppResult,'week'|'streak'>; weekStatus(records:RecordMap, today:DateKey): AppResult['week']; calcStreak(records:RecordMap, today:DateKey): number. 규칙: remainingDays=diffDays(cycleEnd,today); spentBefore=합계(cycleStart≤date<today); todayBudget=floor100(max(0,cycleBudget−spentBefore)/remainingDays); tomorrowBudget=remainingDays===1?null:max(0,floor100((cycleBudget−spentBefore−todaySpent)/(remainingDays−1))); yesterdayCarry=어제 기록 있고 어제≥cycleStart면 budget−지출, 아니면 null",
+    "dependencies": [],
+    "ui_requirements": "UI 없음. 계산 결과는 음수 예산을 절대 반환하지 않아요(todayLeft만 음수 허용, 초과 표시용이에요)."
+  },
+  {
+    "id": "0003",
+    "title": "Storage Layer & Number Input Normalizer",
+    "epic": "Epic 1: Data Layer",
+    "task": {
+      "description": "budgetStore.ts는 템플릿 storage helper를 사용해 load, saveSettings, addSpend, markNoSpend, undoLastSpend, isAdUnlockedToday, markAdUnlocked, resetAll을 구현합니다. 쓰기 함수는 SaveResult를 반환하고, QuotaExceededError가 나면 30일보다 오래된 기록을 지운 뒤 1회만 다시 저장합니다. numberInput.ts에는 normalizeDigits와 toIntOrNull을 구현합니다.",
+      "acceptance_criteria": [
+        "ppd:settings에 깨진 JSON이 있으면 load()는 throw하지 않고 {ok:false}를 반환한다",
+        "setItem이 QuotaExceededError를 던지면 30일보다 오래된 기록을 지우고 1회 재시도한다. 재시도가 성공하면 {ok:true}, 실패하면 {ok:false, reason:'quota'}를 반환한다. 그 밖의 예외는 reason:'unknown'이다",
+        "쓰기에 실패하면 localStorage의 기존 값이 쓰기 전과 같다. 기록을 쓸 때마다 records[today].budget에 현재 todayBudget이 저장되고, 60일이 지난 기록은 정리된다",
+        "normalizeDigits는 입력 → toIntOrNull 결과 기준으로 '$5,000'→5000, '-25'→25, '50000.99'→5000099, 'abc'→null, '0'→null을 만족한다. maxDigits 2이면 '25.5'→'25'다"
+      ]
+    },
+    "covers": [
+      "F1-AC-3",
+      "F1-AC-6",
+      "F3-AC-1",
+      "F3-AC-2",
+      "F3-AC-3",
+      "F3-AC-4",
+      "F4-AC-4",
+      "AC-ERROR",
+      "AC-STORAGE-1",
+      "AC-INPUT-3"
+    ],
+    "files": [
+      "src/lib/budgetStore.ts",
+      "src/lib/numberInput.ts",
+      "src/lib/budgetStore.test.ts"
+    ],
+    "definition_of_done": [
+      "모든 쓰기 함수의 반환 타입이 SaveResult다",
+      "saveSettings는 cycleStart를 유지하고, cycleEnd를 nextPayday로 다시 계산하며, 오늘 budget 스냅샷을 갱신한다. 신규 설정·만료 후 재설정일 때만 cycleStart=today로 저장한다",
+      "markNoSpend는 entries가 있으면 아무것도 하지 않는다. undoLastSpend는 오늘 entries의 마지막 항목만 지운다",
+      "numberInput 6개 케이스와 store 테스트가 통과한다"
+    ],
+    "depends_on": [
+      "0001",
+      "0002"
+    ],
+    "db_schema": "'ppd:settings': BudgetSettings JSON; 'ppd:records': RecordMap JSON(쓸 때 60일이 지난 기록 정리, quota 초과면 30일 기준으로 정리); 'ppd:adUnlockedDate': DateKey 문자열. resetAll은 'ppd:' 접두사 키를 모두 삭제한다",
+    "api_contract": "load(): {ok:true; settings:BudgetSettings|null; records:RecordMap} | {ok:false}; saveSettings(paydayDay:number, cycleBudget:number, opts:{newCycle:boolean}): SaveResult; addSpend(amount:number): SaveResult; markNoSpend(): SaveResult; undoLastSpend(): SaveResult; isAdUnlockedToday(): boolean; markAdUnlocked(): SaveResult; resetAll(): void; normalizeDigits(raw:string, maxDigits:number): string; toIntOrNull(s:string): number|null",
+    "dependencies": [
+      "템플릿 src/lib/storage (localStorage helper)"
+    ],
+    "ui_requirements": "UI 없음. 쓰기에 실패하면 메모리 상태와 localStorage를 부분적으로 바꾸지 않아요. 다음 데이터를 만들어 두고 한 번에 setItem해요."
+  },
+  {
+    "id": "0004",
+    "title": "Setup Sheet & Spend Input Components",
+    "epic": "Epic 2: Home",
+    "task": {
+      "description": "SetupSheet는 TDS BottomSheet 안에 월급날·총액 TextField, 월급날 Chip, 저장 버튼을 둡니다. SpendInput은 지출 TextField, 빠른 금액 Chip, 기록하기·오늘 무지출·마지막 기록 취소 버튼을 둡니다. 모든 숫자 입력은 normalizeDigits로 정규화하고, 범위 help와 hasError를 표시하며, 포커스되면 scrollIntoView를 호출합니다.",
+      "acceptance_criteria": [
+        "월급날에 32나 0을 넣으면 help '1~31 사이로 입력해 주세요'가 보이고 저장이 비활성화된다. 총액이 999면 '1,000원 ~ 100,000,000원 사이로 입력해 주세요'가 보인다. '말일' Chip을 누르면 월급날이 31로 채워진다",
+        "총액에 '$5,000'을 붙여넣으면 '5,000'으로 보인다. 두 TextField 모두 inputMode='numeric'이고 aria-label이 있다",
+        "지출 Chip으로 더한 합계가 10,000,000원을 넘으면 help '1원 ~ 10,000,000원 사이로 입력해 주세요'가 보이고 기록하기가 비활성화된다",
+        "onSave나 onRecord가 {ok:false}를 반환하면 시트는 열린 채로, 입력값은 그대로다. 오늘 무지출은 entries>0이면 비활성, 마지막 기록 취소는 entries===0이면 비활성이다"
+      ]
+    },
+    "covers": [
+      "F1-AC-2",
+      "F1-AC-6",
+      "F3-AC-1",
+      "F3-AC-2",
+      "F3-AC-3",
+      "AC-INPUT-1",
+      "AC-INPUT-2",
+      "AC-INPUT-3",
+      "AC-KEYBOARD",
+      "AC-A11Y-1",
+      "AC-STORAGE-1"
+    ],
+    "files": [
+      "src/components/SetupSheet.tsx",
+      "src/components/SpendInput.tsx"
+    ],
+    "definition_of_done": [
+      "TDS BottomSheet, TextField(variant='box'), Chip, Button(fill/weak), Paragraph.Text, Spacing만 사용한다",
+      "인라인 margin/padding은 0건이고, 커스텀 div는 flex 배치에만 쓴다",
+      "Chip에는 tickWeak, 저장·기록하기에는 success 햅틱을 적용한다",
+      "금액은 formatNumber로 콤마 표시하고, 상태값은 콤마 없는 문자열이나 number로 둔다"
+    ],
+    "depends_on": [
+      "0003"
+    ],
+    "db_schema": "직접 접근 없음(부모 콜백 경유)",
+    "api_contract": "SetupSheet props: { open:boolean; initial?:{paydayDay:number; cycleBudget:number}; onSave:(paydayDay:number, cycleBudget:number)=>SaveResult; onClose:()=>void }. SpendInput props: { entriesCount:number; onRecord:(amount:number)=>SaveResult; onNoSpend:()=>SaveResult; onUndo:()=>SaveResult; onToast:(msg:string)=>void }. SpendInput은 기록에 성공하면 입력 칸을 비우고 onToast('{formatCurrency(amount)} 기록했어요')를 호출한다",
+    "dependencies": [
+      "@toss/tds-mobile",
+      "src/lib/numberInput",
+      "src/lib/format (formatNumber/formatCurrency)"
+    ],
+    "ui_requirements": "## Screen: 설정 BottomSheet (SetupSheet) — Pattern: ButtonStack\n<BottomSheet open={open} onClose={onClose}>\n  <Paragraph.Text typography=\"t4\">예산 설정</Paragraph.Text>\n  <Spacing size={16} />\n  <TextField variant=\"box\" label=\"월급날\" inputMode=\"numeric\" value={day} help={dayHelp} hasError={dayTouched && !dayValid} aria-label=\"월급날\" />\n  <Spacing size={8} />\n  <div style={{ display:'flex', gap:8, overflowX:'auto' }}>{['10일','15일','21일','25일','말일'].map(l => <Chip label={l} variant={sel?'filled':'outlined'} selected={sel} />)}</div>\n  <Spacing size={20} />\n  <TextField variant=\"box\" label=\"이번 달 쓸 수 있는 총액\" inputMode=\"numeric\" value={formatNumber(budget)} help={budgetHelp} hasError={budgetTouched && !budgetValid} aria-label=\"이번 달 쓸 수 있는 총액\" />\n  <Spacing size={24} />\n  <Button variant=\"fill\" size=\"xlarge\" disabled={!dayValid || !budgetValid} aria-label=\"저장\">저장</Button>\n  <Spacing size={16} />\n</BottomSheet>\n- 초기값: 새로 설정할 때는 빈 칸, 수정하거나 만료 후 다시 설정할 때는 initial 값을 채워요.\n- Chip은 월급날 칸을 채우고('말일'=31) tickWeak 햅틱을 줘요. 저장이 ok면 시트를 닫고, ok:false면 열어 둔 채 입력값을 유지해요.\n\n## SpendInput (Home 지출 영역) — Pattern F/B\n<Paragraph.Text typography=\"t4\">오늘 지출 기록</Paragraph.Text>\n<Spacing size={12} />\n<TextField variant=\"box\" label=\"오늘 쓴 금액\" inputMode=\"numeric\" value={formatNumber(amount)} help={rangeHelp} hasError={touched && invalid} aria-label=\"오늘 쓴 금액\" />\n<Spacing size={8} />\n<div style={{ display:'flex', gap:8, overflowX:'auto' }}><Chip label=\"+5,000\" variant=\"outlined\" /><Chip label=\"+10,000\" variant=\"outlined\" /><Chip label=\"+30,000\" variant=\"outlined\" /></div>\n<Spacing size={12} />\n<Button variant=\"fill\" size=\"large\" disabled={invalid} aria-label=\"기록하기\">기록하기</Button>\n<Spacing size={8} />\n<div style={{ display:'flex', gap:8 }}>\n  <Button variant=\"weak\" size=\"medium\" disabled={entries.length>0} aria-label=\"오늘 무지출\">오늘 무지출</Button>\n  <Button variant=\"weak\" size=\"medium\" color=\"dark\" disabled={entries.length===0} aria-label=\"마지막 기록 취소\">마지막 기록 취소</Button>\n</div>\n- 햅틱: Chip → tickWeak, 기록하기·무지출 → success, 취소 → tickStrong. 취소하면 Toast '마지막 기록을 취소했어요'를 보여 줘요.\n- TextField에 포커스되면 scrollIntoView({ block:'center' })를 호출해요."
+  },
+  {
+    "id": "0005",
+    "title": "Home Page & Today Dashboard",
+    "epic": "Epic 2: Home",
+    "task": {
+      "description": "Home.tsx는 로딩, 빈 상태, 사이클 만료, 대시보드, 오류의 5가지 상태를 분기하고 SetupSheet, SpendInput, Toast, AlertDialog를 연결합니다. TodayDashboard.tsx는 D-day, 오늘 예산(SummaryHero), 오늘 쓴 돈과 남은 돈 ListRow, 어제 이월 문구를 표시합니다. 하단 고정 CTA '오늘 결산 보기'는 RouteState와 함께 /result로 이동합니다.",
+      "acceptance_criteria": [
+        "ppd:settings가 없으면 EmptyState '월급날까지 하루 예산을 계산해 드릴게요'와 '시작하기'가 보인다. '시작하기'를 눌러 저장하면 Toast '예산을 설정했어요'가 뜨고, 새로고침 없이 대시보드로 바뀐다",
+        "today ≥ cycleEnd면 '월급날이 지났어요. 이번 달 예산을 새로 설정해 주세요'와 '새로 설정하기'가 보인다. 이때 '예산 수정'과 고정 CTA는 숨겨진다. JSON이 깨졌으면 '다시 시도'와 '초기화'(AlertDialog)가 보인다",
+        "remainingDays 5면 'D-5', 1이면 '내일 월급날이에요'가 보인다. todayLeft<0이면 '{금액} 초과했어요'를 빨강 토큰으로 표시한다. cycleOverspent>0이면 '이번 달 예산을 {초과액} 넘겼어요'가 보인다",
+        "records[today]가 없으면 '오늘 결산 보기'가 비활성화된다. 저장 결과가 reason 'quota'면 '저장 공간이 부족해요. 기록을 초기화하면 다시 저장할 수 있어요' Toast를, 'unknown'이면 '저장에 실패했어요. 다시 시도해 주세요' Toast를 보여 준다"
+      ]
+    },
+    "covers": [
+      "F1-AC-1",
+      "F1-AC-3",
+      "F1-AC-5",
+      "F1-AC-6",
+      "F2-AC-1",
+      "F2-AC-2",
+      "F2-AC-3",
+      "F2-AC-4",
+      "F2-AC-5",
+      "F3-AC-6",
+      "F3-AC-7",
+      "AC-EMPTY",
+      "AC-LOADING",
+      "AC-ERROR",
+      "AC-STORAGE-1",
+      "AC-NETWORK",
+      "AC-FORMAT",
+      "AC-A11Y-3"
+    ],
+    "files": [
+      "src/pages/Home.tsx",
+      "src/components/TodayDashboard.tsx"
+    ],
+    "definition_of_done": [
+      "금액은 모두 formatCurrency, 일수는 formatNumber로 출력한다",
+      "HEX 색상 0건, 인라인 margin/padding 0건이다(간격은 Spacing만 사용)",
+      "고정 CTA에 env(safe-area-inset-bottom)를 반영한다",
+      "네트워크 호출 없이 동작한다(오프라인에서 설정·기록 가능)",
+      "Toast는 { open, message } 상태 하나로 관리한다"
+    ],
+    "depends_on": [
+      "0002",
+      "0003",
+      "0004"
+    ],
+    "db_schema": "읽기: load(). 쓰기: saveSettings, addSpend, markNoSpend, undoLastSpend, resetAll(모두 budgetStore 경유)",
+    "api_contract": "TodayDashboard props: { result: Omit<AppResult,'week'|'streak'>; cycleEnd: DateKey }. navigate('/result', { state: RouteState }) — RouteState.result에는 computeDaily 결과, weekStatus, calcStreak를 합쳐 넣는다",
+    "dependencies": [
+      "@toss/tds-mobile",
+      "react-router-dom",
+      "템플릿 SummaryHero, Amount, EmptyState"
+    ],
+    "ui_requirements": "## Screen: Home (/) — Pattern: Top+우측액션\nWhitelist: Top, Paragraph.Text, Spacing, ListRow, Button, TextField, Chip, Toast, AlertDialog, BottomSheet(SetupSheet 경유), SummaryHero, Amount, EmptyState\n<Top title={<Top.TitleParagraph>PaydayPerDay</Top.TitleParagraph>} right={isActiveCycle && <Button variant=\"weak\" size=\"small\" aria-label=\"예산 수정\">예산 수정</Button>} />\n<Spacing size={8} />\n<Paragraph.Text typography=\"t6\" color=\"secondary\">{remainingDays===1 ? '내일 월급날이에요' : `월급날까지 D-${remainingDays} (9월 25일)`}</Paragraph.Text>\n<Spacing size={12} />\n<SummaryHero label=\"오늘 쓸 수 있는 돈\" value={<Amount value={todayBudget} unit=\"원\" typography=\"t1\" />} caption={cycleOverspent>0 ? `이번 달 예산을 ${formatCurrency(cycleOverspent)} 넘겼어요` : undefined} />\n<Spacing size={16} />\n<ListRow contents={<ListRow.Texts type=\"2RowTypeA\" top=\"오늘 쓴 돈\" bottom={formatCurrency(todaySpent)} />} />\n<ListRow contents={<ListRow.Texts type=\"2RowTypeA\" top=\"오늘 남은 돈\" bottom={todayLeft>=0 ? `${fmt} 남았어요` : <span style={{ color:'var(--tds-color-red500)' }}>{fmt} 초과했어요</span>} />} />\n{yesterdayCarry!==null && <Paragraph.Text typography=\"t7\" color=\"tertiary\">어제 {carry} 남겨서 남은 날 예산에 더했어요 / 어제 {|carry|} 초과해서 남은 날 예산에서 뺐어요</Paragraph.Text>}\n<Spacing size={24} />\n<SpendInput ... />\n<div style={{ height:'calc(88px + env(safe-area-inset-bottom))' }} />\n<FixedCTA>{/* position fixed, paddingBottom calc(16px + env(safe-area-inset-bottom)), bg var(--tds-color-background) */}<Button variant=\"fill\" size=\"xlarge\" disabled={!todayRecord} aria-label=\"오늘 결산 보기\">오늘 결산 보기</Button></FixedCTA>\n\nStates:\n- 로딩: Top과 함께 SummaryHero 자리에 Skeleton(없으면 Paragraph.Text color='tertiary' '불러오는 중이에요')을 보여 줘요. 입력 영역은 렌더하지 않아요.\n- 빈 상태: <EmptyState title=\"월급날까지 하루 예산을 계산해 드릴게요\" action={<Button variant=\"weak\" aria-label=\"시작하기\">시작하기</Button>} />. 고정 CTA는 없어요.\n- 사이클 만료: Paragraph.Text t5 '월급날이 지났어요. 이번 달 예산을 새로 설정해 주세요', Spacing 16, Button fill '새로 설정하기'(initial 값을 미리 채움)를 보여 줘요. '예산 수정'과 고정 CTA는 숨겨요.\n- 오류: '데이터를 불러오지 못했어요'와 버튼(fill '다시 시도', weak '초기화')을 보여 줘요. 초기화 AlertDialog: 제목 '기록을 모두 지울까요?', alertButton '초기화하기', 닫기는 onClose로 처리해요.\nInteractions: 예산 수정·시작하기·새로 설정하기 → SetupSheet 열기(tickWeak). 오늘 결산 보기 → navigate('/result',{state}) (tickWeak). 초기화 확인 → tickStrong 후 ppd:* 삭제, 빈 상태로 전환해요. Toast는 1개, position='bottom'이에요."
+  },
+  {
+    "id": "0006",
+    "title": "Week Streak & Result Ad Gate Components",
+    "epic": "Epic 3: Result",
+    "task": {
+      "description": "WeekStreak.tsx는 7칸 주간 상태(✓/✕/·/빈칸)를 flex로 배치하고, '{n}일 연속 예산 지킴'과 '이번 주 {k}/7일 준수'를 표시합니다. ResultAdGate.tsx는 unlocked면 children을 바로 렌더합니다. 아니면 오프라인 안내, TossRewardAd, 광고 로드 실패 또는 닫힘 안내를 분기하고, 재시도할 때는 key를 바꿔 광고를 다시 마운트합니다.",
+      "acceptance_criteria": [
+        "7칸마다 role='img'와 aria-label='{요일} {지킴|초과|기록 없음|예정}'이 있고 minWidth·minHeight가 44px 이상이다. 숫자는 formatNumber로 출력한다",
+        "unlocked=false이고 navigator.onLine===false면 TossRewardAd를 렌더하지 않고(광고 요청 0회) '인터넷 연결을 확인한 뒤 다시 시도해 주세요'와 '다시 시도', '홈으로'를 보여 준다",
+        "광고 로드 실패를 mock하면 '광고를 불러오지 못했어요. 잠시 후 다시 시도해 주세요'가, 닫힘을 mock하면 '광고를 끝까지 보면 오늘 결산을 볼 수 있어요'와 '다시 보기'가 보인다. 두 경우 모두 결산 텍스트 '오늘 예산'은 0건이다",
+        "광고 완료 전에는 children이 DOM에 마운트되지 않는다. 자동 재시도는 없고, 버튼을 눌렀을 때만 광고를 재요청한다"
+      ]
+    },
+    "covers": [
+      "F4-AC-1",
+      "F4-AC-2",
+      "F4-AC-4",
+      "AC-A11Y-2",
+      "AC-A11Y-3",
+      "AC-REWARD-2",
+      "AC-AD-FAIL",
+      "AC-NETWORK"
+    ],
+    "files": [
+      "src/components/WeekStreak.tsx",
+      "src/components/ResultAdGate.tsx"
+    ],
+    "definition_of_done": [
+      "착수 전에 템플릿 src/components/TossRewardAd의 실제 props와 완료/실패 처리 방식을 확인하고 PR 설명에 적는다",
+      "TossRewardAd 내부 로직은 수정하지 않는다. 실패나 닫힘 콜백 prop이 이미 있으면 그것을 쓴다",
+      "색상은 var(--tds-color-*) 토큰만 쓴다(HEX 0건)",
+      "모든 Button에 aria-label이 있다"
+    ],
+    "depends_on": [
+      "0002",
+      "0003"
+    ],
+    "db_schema": "ResultAdGate는 저장소에 직접 쓰지 않는다(markAdUnlocked는 Result의 ResultContent가 담당)",
+    "api_contract": "WeekStreak props: { week: AppResult['week']; streak: number }. ResultAdGate props: { unlocked: boolean; onHome: () => void; children: ReactNode }. 내부 상태: 'ad' | 'offline' | 'loadFailed' | 'dismissed', adKey:number. 광고 렌더: <TossRewardAd key={adKey} slotId={import.meta.env.VITE_TOSS_AD_SLOT_ID}>{children}</TossRewardAd>",
+    "dependencies": [
+      "@toss/tds-mobile",
+      "템플릿 TossRewardAd"
+    ],
+    "ui_requirements": "## WeekStreak (Result 내부)\n<Paragraph.Text typography=\"t4\">이번 주 예산 준수</Paragraph.Text>\n<Spacing size={12} />\n<div style={{ display:'flex', gap:4 }}>\n  {week.map(d => <div role=\"img\" aria-label={`${요일} ${상태}`} style={{ flex:1, minHeight:44, minWidth:44, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', borderRadius:12, backgroundColor:'var(--tds-color-grey50)' }}>\n    <Paragraph.Text typography=\"st13\" color=\"tertiary\">{요일}</Paragraph.Text>\n    <Paragraph.Text typography=\"st6\">{'✓'|'✕'|'·'|''}</Paragraph.Text></div>)}\n</div>\n<Spacing size={8} />\n<Paragraph.Text typography=\"t7\" color=\"secondary\">이번 주 {formatNumber(k)}/7일 준수</Paragraph.Text>\n- 칸은 누를 수 없고 표시만 해요. 상태 라벨은 지킴 / 초과 / 기록 없음 / 예정이에요.\n\n## ResultAdGate 안내 패널 (States 6~7)\n세로 순서: Paragraph.Text t5 → Spacing 16 → Button fill → Spacing 8 → Button weak '홈으로'\n- 오프라인: '인터넷 연결을 확인한 뒤 다시 시도해 주세요' / fill '다시 시도' / weak '홈으로'\n- 로드 실패: '광고를 불러오지 못했어요. 잠시 후 다시 시도해 주세요' / fill '다시 시도' / weak '홈으로'\n- 시청 중 닫기: '광고를 끝까지 보면 오늘 결산을 볼 수 있어요' / fill '다시 보기' / weak '홈으로'\n- 실패 신호를 받으면 1초 안에 안내로 바뀌어요. 무한 로딩은 없어요.\n- 다시 시도·다시 보기: 온라인이면 adKey를 바꿔 광고를 재요청하고, 오프라인이면 같은 안내를 유지해요(tickWeak)."
+  },
+  {
+    "id": "0007",
+    "title": "Result Page",
+    "epic": "Epic 3: Result",
+    "task": {
+      "description": "Result.tsx는 상태를 로딩 → 오류 → settings 없음 → 사이클 만료 → 오늘 기록 없음 → unlock 여부 순서로 판정합니다. 결산 ListRow와 WeekStreak를 ResultContent에 담아 ResultAdGate로 감쌉니다. ResultContent는 첫 마운트 useEffect에서만 markAdUnlocked()를 호출하고, 값은 항상 localStorage 기준으로 다시 계산합니다.",
+      "acceptance_criteria": [
+        "settings가 없거나 today ≥ cycleEnd면 navigate('/', {replace:true})로 이동하고, 광고와 결산을 렌더하지 않는다",
+        "records[today]가 없으면 route state가 있어도 '오늘 기록이 아직 없어요. 지출이나 무지출을 기록하면 결산을 볼 수 있어요'와 '홈으로'만 보인다. 광고 요청은 0회이고 ppd:adUnlockedDate는 바뀌지 않는다",
+        "ppd:adUnlockedDate===today면 광고 없이 결산이 바로 보인다(오프라인 포함). 광고를 끝까지 보고 결산이 처음 마운트되면 ppd:adUnlockedDate=today가 저장된다",
+        "결산에 오늘 예산, 오늘 쓴 돈, 남긴 돈 또는 초과한 돈, 내일 예산(remainingDays 1이면 '내일은 월급날이에요'), 월급날 D-day ListRow가 formatCurrency로 표시된다"
+      ]
+    },
+    "covers": [
+      "F3-AC-5",
+      "F4-AC-3",
+      "F4-AC-4",
+      "F4-AC-5",
+      "F4-AC-6",
+      "F4-AC-7",
+      "AC-REWARD",
+      "AC-REWARD-2",
+      "AC-FORMAT",
+      "AC-LOADING",
+      "AC-ERROR"
+    ],
+    "files": [
+      "src/pages/Result.tsx"
+    ],
+    "definition_of_done": [
+      "Screen Definitions의 상태 판정 순서를 그대로 구현한다",
+      "markAdUnlocked()는 ResultContent의 useEffect(빈 deps)에서만 호출한다",
+      "하단 고정 '홈으로'는 결산 표시 상태에서만 렌더하고, env(safe-area-inset-bottom)을 반영한다",
+      "HEX 0건, 인라인 margin/padding 0건, console.error 0건이다"
+    ],
+    "depends_on": [
+      "0002",
+      "0003",
+      "0006"
+    ],
+    "db_schema": "읽기: load(), isAdUnlockedToday(). 쓰기: markAdUnlocked()('ppd:adUnlockedDate'=today)",
+    "api_contract": "useLocation().state as RouteState | undefined — 판정과 표시에 쓰지 않고 localStorage로 다시 계산한다. ResultContent props: { result: AppResult }",
+    "dependencies": [
+      "@toss/tds-mobile",
+      "react-router-dom",
+      "템플릿 SummaryHero, Amount"
+    ],
+    "ui_requirements": "## Screen: Result (/result) — Pattern: StatusPanel\nWhitelist: Top, Paragraph.Text, Spacing, ListRow, Button, SummaryHero, Amount, TossRewardAd(ResultAdGate 경유)\n<Top title={<Top.TitleParagraph>오늘 결산</Top.TitleParagraph>} />\n<Spacing size={16} />\n<ResultAdGate unlocked={isAdUnlockedToday()}>\n  <ResultContent>{/* 첫 마운트 useEffect에서만 markAdUnlocked(), 햅틱 success */}\n    <SummaryHero label={todayLeft>=0 ? '오늘 남긴 돈' : '오늘 초과한 돈'} value={<Amount value={Math.abs(todayLeft)} unit=\"원\" typography=\"t1\" />} caption={`${n}일 연속 예산 지킴`} />\n    <Spacing size={16} />\n    <ListRow contents={<ListRow.Texts type=\"2RowTypeA\" top=\"오늘 예산\" bottom={formatCurrency(todayBudget)} />} />\n    <ListRow contents={<ListRow.Texts type=\"2RowTypeA\" top=\"오늘 쓴 돈\" bottom={formatCurrency(todaySpent)} />} />\n    <ListRow contents={<ListRow.Texts type=\"2RowTypeA\" top=\"남긴 돈 / 초과한 돈\" bottom={…} />} />\n    <ListRow contents={<ListRow.Texts type=\"2RowTypeA\" top=\"내일 예산\" bottom={tomorrowBudget ?? '내일은 월급날이에요'} />} />\n    <ListRow contents={<ListRow.Texts type=\"2RowTypeA\" top=\"월급날\" bottom={`D-${remainingDays}`} />} />\n    <Spacing size={24} />\n    <WeekStreak week={week} streak={streak} />\n  </ResultContent>\n</ResultAdGate>\n<div style={{ height:'calc(88px + env(safe-area-inset-bottom))' }} />\n<FixedCTA><Button variant=\"fill\" size=\"xlarge\" aria-label=\"홈으로\">홈으로</Button></FixedCTA>{/* 결산 표시 상태에서만 */}\n\nStates(판정 순서):\n1. 로딩: SummaryHero와 ListRow 자리에 Skeleton을 보여 주고, 광고는 요청하지 않아요.\n2. 오류: '데이터를 불러오지 못했어요'와 다시 시도 / 초기화(AlertDialog) 버튼을 보여 줘요.\n3. settings 없음 → navigate('/', {replace:true})\n4. 사이클 만료 → navigate('/', {replace:true})\n5. 오늘 기록 없음: Paragraph.Text t5 '오늘 기록이 아직 없어요. 지출이나 무지출을 기록하면 결산을 볼 수 있어요' + Button fill '홈으로'(replace)를 보여 줘요. 광고는 요청하지 않아요.\n6~7. 오프라인과 광고 실패는 ResultAdGate가 처리해요. 안내 패널이 보일 때는 하단 고정 '홈으로'를 렌더하지 않아요.\n홈으로: navigate('/') + tickWeak"
+  },
+  {
+    "id": "0008",
+    "title": "Routing & Integration",
+    "epic": "Epic 4: Integration & Routing",
+    "task": {
+      "description": "App.tsx에 react-router-dom 라우트를 연결합니다. '/'는 Home, '/result'는 Result를 렌더하고, 알 수 없는 경로는 '/'로 Navigate replace합니다. main.tsx는 수정하지 않습니다. 끝으로 외부 링크, HEX, console.error, 외부 로깅 SDK, 금지 UI 라이브러리가 0건인지 점검하고 빌드를 확인합니다.",
+      "acceptance_criteria": [
+        "'/'에 들어가면 Home, '/result'에 들어가면 Result가 렌더되고, '/unknown'에 들어가면 '/'로 이동한다",
+        "src 전체 grep 결과 다음이 모두 0건이다: '#[0-9a-fA-F]{3,6}' HEX, 'console.error', 외부 'http(s)://' 링크와 window.open, 'gtag|amplitude|@sentry|datadog|bugsnag', shadcn/MUI/antd/chakra/tailwind import",
+        "모든 <Button과 <TextField에 aria-label이 있고, npm run build와 vitest가 성공한다"
+      ]
+    },
+    "covers": [
+      "F4-AC-5",
+      "AC-REVIEW-1",
+      "AC-REVIEW-2",
+      "AC-REVIEW-3",
+      "AC-A11Y-1",
+      "AC-A11Y-2",
+      "AC-A11Y-3"
+    ],
+    "files": [
+      "src/App.tsx"
+    ],
+    "definition_of_done": [
+      "main.tsx(@AI:ANCHOR)는 수정하지 않는다",
+      "Routes에 '/', '/result', '*'(Navigate to='/' replace)가 있다",
+      "npm run build가 성공한다",
+      "수동 QA: 오프라인에서 Home의 설정·기록·취소가 동작하고, /result는 오프라인 안내를 보여 준다. 오늘 기록 없이 /result에 직접 들어가면 안내가 보이고, 만료 사이클이면 '/'로 이동한다"
+    ],
+    "depends_on": [
+      "0005",
+      "0007"
+    ],
+    "db_schema": "없음",
+    "api_contract": "<Routes><Route path='/' element={<Home/>} /><Route path='/result' element={<Result/>} /><Route path='*' element={<Navigate to='/' replace />} /></Routes>",
+    "dependencies": [
+      "react-router-dom"
+    ],
+    "ui_requirements": "하단 탭 네비게이션은 없어요(FloatingTabBar 미사용). 라우트는 '/'와 '/result' 2개뿐이고, '/result'는 하위 화면이에요. AI 고지(Pattern G·H)는 넣지 않아요. 전역 스타일로 TDS 컴포넌트 여백을 덮어쓰지 않아요."
+  }
+]

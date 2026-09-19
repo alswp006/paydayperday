@@ -31,7 +31,10 @@ export function EmptyState({
         flexDirection: "column",
         alignItems: "center",
         textAlign: "center",
+        justifyContent: "center",
+        minHeight: "50dvh",
         padding: "48px 24px",
+        wordBreak: "keep-all",
       }}
     >
       {icon}
@@ -39,7 +42,7 @@ export function EmptyState({
       <Paragraph.Text typography="t4">{title}</Paragraph.Text>
       {description ? (
         <>
-          <Spacing size={4} />
+          <Spacing size={12} />
           <Paragraph.Text typography="t6">{description}</Paragraph.Text>
         </>
       ) : null}

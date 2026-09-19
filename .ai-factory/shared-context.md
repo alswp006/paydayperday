@@ -85,7 +85,7 @@ export interface AppResult {
   todayBudget: number;
   todaySpent: number;
   todayLeft: number;
-  cycleOverspent: boolean;
+  cycleOverspent: number;
   tomorrowBudget: number | null;
   yesterdayCarry: number | null;
   week: WeekDay[];
@@ -127,10 +127,12 @@ export const STORAGE_KEYS = {
     TossRewardAd.tsx
   hooks/
   lib/
+    calculator.ts
     contract.ts
     date.test.ts
     date.ts
     storage.ts
+    streak.ts
     types.ts
     utils.ts
   main.tsx
@@ -145,9 +147,11 @@ export const STORAGE_KEYS = {
   vite-env.d.ts
 
 ### Exports (src/lib/)
+- calculator.ts: export function computeDaily( settings: BudgetSettings, records: RecordMap, today: DateKey, ): Omit<AppResult, 'week' | 
 - contract.ts: export type Budget =; export type Transaction =; export type StreakData =; export type formatCurrencyFn = (amountKrw: number) => string; export type formatDateFn = (date: string, format?: string) => string; export type calculateBudgetStatusFn = (budgetKrw: number, spentKrw: number) =>; export type sumDailySpentFn = (transactions: Transaction[], endDate: string) => number; export type calculateCurrentStreakFn = (budget: Budget, transactions: Transaction[]) => StreakData
 - date.ts: export function toDateKey(d: Date): DateKey; export function addDays(k: DateKey, n: number): DateKey; export function diffDays(a: DateKey, b: DateKey): number; export function nextPayday(today: DateKey, day: number): DateKey; export function weekKeys(today: DateKey): DateKey[]; export function formatDate(date: string, format = 'M월 D일'): string
 - storage.ts: export function getItem<T>(key: string): T | null; export function setItem<T>(key: string, value: T): void; export function removeItem(key: string): void
+- streak.ts: export function weekStatus(records: RecordMap, today: DateKey): WeekDay[]; export function calcStreak(records: RecordMap, today: DateKey): number
 - types.ts: export type DateKey = string; export interface BudgetSettings; export interface DayRecord; export type RecordMap = Record<DateKey, DayRecord>; export interface AppInput; export interface WeekDay; export interface AppResult; export interface RouteState
 - utils.ts: export function cn(...classes: (string | boolean | undefined | null)[]): string; export function formatNumber(n: number): string; export function formatCurrency(n: number, currency = 'KRW'): string
 
@@ -168,13 +172,19 @@ export const STORAGE_KEYS = {
 - TossRewardAd.tsx: TossRewardAd
 
 ### Module Dependencies (import graph)
+  lib/calculator.ts → imports: lib/types, lib/date
   lib/date.ts → imports: lib/types
+  lib/streak.ts → imports: lib/types, lib/date
 CRITICAL: Before creating any new function, type, or component, check the list above. If something similar exists, import and use it.
 
 ## Already Implemented (do NOT duplicate or overwrite)
 - 0001: Types & Date Utils (files: src/lib/types.ts, src/lib/date.ts, src/lib/date.test.ts)
+- 0008: Routing & Integration (files: src/App.tsx)
 
 ## Available exports from existing files
+// src/App.tsx
+export default function App() {
+
 // src/components/AdSlot.tsx
 export function AdSlot({ adGroupId, className, variant, theme }: AdSlotProps) {
 
@@ -230,8 +240,7 @@ export type formatDateFn = (date: string, format?: string) => string;
 export type calculateBudgetStatusFn = (budgetKrw: number, spentKrw: number) => { remainingKrw: number; percentUsed: number };
 export type sumDailySpentFn = (transactions: Transaction[], endDate: string) => number;
 export type calculateCurrentStreakFn = (budget: Budget, transactions: Transaction[]) => StreakData;
-export type calculateDailyBudgetFn = (budgetKrw: number, endDate: string) => number;
-export type useBudgetStoreFn = 
+export type calculateDailyBudgetFn = (budgetKrw: number, endDate: st
 
 ## Memory Index (자동 학습 — 힌트로만 사용, 실제 코드 확인 필수)
 

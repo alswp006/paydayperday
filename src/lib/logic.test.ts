@@ -12,7 +12,7 @@ const settings = (cycleBudget: number, cycleStart: string, cycleEnd: string): Bu
 const rec = (date: string, entries: number[], budget: number) => ({ date, entries, budget });
 
 describe('computeDaily', () => {
-  const s = settings(500000, '2026-09-20', '2026-09-24');
+  const s = settings(500000, '2026-09-20', '2026-09-25');
   const today = '2026-09-20';
 
   it('이전 지출 0원이면 todayBudget은 100,000', () => {
@@ -34,7 +34,7 @@ describe('computeDaily', () => {
 
   it('이전 지출이 총액을 넘으면 todayBudget 0, cycleOverspent > 0', () => {
     const records: RecordMap = { '2026-09-19': rec('2026-09-19', [600000], 100000) };
-    const r = computeDaily(s, records, today);
+    const r = computeDaily({ ...s, cycleStart: '2026-09-19' }, records, today);
     expect(r.todayBudget).toBe(0);
     expect(r.cycleOverspent).toBeGreaterThan(0);
     expect(r.tomorrowBudget).toBe(0);

@@ -12,11 +12,11 @@ export function computeDaily(
   today: DateKey,
 ): Omit<AppResult, 'week' | 'streak'> {
   const { cycleBudget, cycleStart, cycleEnd } = settings;
-  const remainingDays = Math.max(1, diffDays(cycleEnd, today) + 1);
+  const remainingDays = Math.max(1, diffDays(cycleEnd, today));
 
   let spentBefore = 0;
   for (const [date, rec] of Object.entries(records)) {
-    if (date < today) spentBefore += sum(rec?.entries ?? []);
+    if (date >= cycleStart && date < today) spentBefore += sum(rec?.entries ?? []);
   }
   const todaySpent = sum(records[today]?.entries ?? []);
 

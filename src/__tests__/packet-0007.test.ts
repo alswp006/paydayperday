@@ -76,7 +76,7 @@ const settings: BudgetSettings = {
   paydayDay: 24,
   cycleBudget: 300000,
   cycleStart: "2026-08-25",
-  cycleEnd: "2026-09-24",
+  cycleEnd: "2026-09-25",
 };
 
 function seed(opts: { settings?: BudgetSettings | null; records?: RecordMap; unlocked?: string }) {

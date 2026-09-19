@@ -26,9 +26,7 @@ export function calcStreak(records: RecordMap, today: DateKey): number {
   if (todayStatus === 'fail') return 0;
   if (todayStatus === 'success') count = 1;
 
-  // 어제 기록이 아직 없으면(오늘 첫 진입 등) 그 전날부터 센다
   let d = addDays(today, -1);
-  if (count === 0 && statusOf(records, d) === 'none') d = addDays(d, -1);
   for (;;) {
     const s = statusOf(records, d);
     if (s !== 'success') return s === 'fail' ? 0 : count;

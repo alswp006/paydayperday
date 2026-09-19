@@ -28,7 +28,7 @@ describe('budgetStore', () => {
     const second = load();
     if (first.ok && second.ok) {
       expect(second.settings?.cycleStart).toBe(first.settings?.cycleStart);
-      expect(Object.values(second.records)[0].budget).toBeGreaterThan(0);
+      expect(Object.keys(second.records)).toHaveLength(0);
     }
   });
 

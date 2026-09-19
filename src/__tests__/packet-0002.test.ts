@@ -43,7 +43,7 @@ describe("AC-1: Daily budget calculation with carryover", () => {
     const settings = makeSettings(
       500000, // cycleBudget
       "2026-09-20", // cycleStart (today)
-      "2026-09-24", // cycleEnd (4 days later, so 5 days total)
+      "2026-09-25", // cycleEnd (4 days later, so 5 days total)
       25,
     );
     const records: RecordMap = {}; // No prior spending
@@ -60,7 +60,7 @@ describe("AC-1: Daily budget calculation with carryover", () => {
 
   it("should calculate tomorrowBudget = floor100((cycleBudget - spentToday) / (remainingDays - 1))", () => {
     // AC-1 case 1: spend 55,000 today → tomorrowBudget = floor((500000-55000)/4) = floor(111250) = 111200
-    const settings = makeSettings(500000, "2026-09-20", "2026-09-24", 25);
+    const settings = makeSettings(500000, "2026-09-20", "2026-09-25", 25);
     const records: RecordMap = {};
     const today = "2026-09-20";
 
@@ -81,7 +81,7 @@ describe("AC-1: Daily budget calculation with carryover", () => {
 
   it("should calculate negative todayLeft when spending exceeds todayBudget", () => {
     // AC-1 case 2: todayBudget 100000, spend 120000 → todayLeft = -20000
-    const settings = makeSettings(500000, "2026-09-20", "2026-09-24", 25);
+    const settings = makeSettings(500000, "2026-09-20", "2026-09-25", 25);
     const today = "2026-09-20";
 
     const result = computeDaily(settings, {}, today);
@@ -109,7 +109,7 @@ describe("AC-1: Daily budget calculation with carryover", () => {
 describe("AC-2: Budget bounds and edge cases", () => {
   it("should set todayBudget = 0 and cycleOverspent > 0 when prior spending exceeds cycleBudget", () => {
     // Setup: 100,000원 budget, already spent 150,000 before today
-    const settings = makeSettings(100000, "2026-09-20", "2026-09-24", 25);
+    const settings = makeSettings(100000, "2026-09-19", "2026-09-25", 25);
     const yesterday = "2026-09-19";
     const today = "2026-09-20";
 
@@ -136,7 +136,7 @@ describe("AC-2: Budget bounds and edge cases", () => {
 
   it("should set yesterdayCarry = null when yesterday is before cycleStart", () => {
     // Setup: cycle starts today, so yesterday is outside cycle
-    const settings = makeSettings(100000, "2026-09-20", "2026-09-24", 25);
+    const settings = makeSettings(100000, "2026-09-19", "2026-09-25", 25);
     const today = "2026-09-20"; // cycleStart = today
 
     const result = computeDaily(settings, {}, today);
@@ -199,7 +199,7 @@ describe("AC-3: Streak calculation", () => {
   it("should stop counting when encountering a 'none' status", () => {
     // Setup: success → success → none (no record) → success → success
     // Streak should stop at 'none', not continue to future successes
-    const today = "2026-09-20";
+    const today = "2026-09-19";
     const d1 = "2026-09-17"; // success
     const d2 = "2026-09-18"; // success
     // d3 = "2026-09-19"; // none (no record)

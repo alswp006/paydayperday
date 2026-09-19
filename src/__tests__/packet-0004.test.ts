@@ -124,8 +124,8 @@ describe("Setup Sheet & Spend Input Components", () => {
     const props = renderSpend();
     fireEvent.change(spendField(), { target: { value: "9990000" } });
     expect(screen.getByRole("button", { name: "기록하기" })).not.toBeDisabled();
-    fireEvent.click(screen.getByRole("button", { name: /50,000/ }));
-    expect(spendField().value).toBe("10,040,000");
+    fireEvent.click(screen.getByRole("button", { name: /30,000/ }));
+    expect(spendField().value).toBe("10,020,000");
     expect(screen.getByText("1원 ~ 10,000,000원 사이로 입력해 주세요")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "기록하기" })).toBeDisabled();
     expect(props.onRecord).not.toHaveBeenCalled();

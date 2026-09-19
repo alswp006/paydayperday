@@ -102,7 +102,7 @@ const settings: BudgetSettings = {
   paydayDay: 24,
   cycleBudget: 300000,
   cycleStart: "2026-08-25",
-  cycleEnd: "2026-09-24",
+  cycleEnd: "2026-09-25",
 };
 const ok: SaveResult = { ok: true };
 const renderHome = () => render(React.createElement(MemoryRouter, null, React.createElement(Home)));
@@ -171,7 +171,7 @@ describe("Home Page & Today Dashboard", () => {
   it("AC-3[P0]: D-day 문구 — remainingDays 5는 'D-5', 1은 '내일 월급날이에요'", () => {
     const base = { todayBudget: 60000, todaySpent: 0, todayLeft: 60000, cycleOverspent: 0, tomorrowBudget: 60000, yesterdayCarry: null };
     const { unmount } = render(
-      React.createElement(TodayDashboard, { result: { ...base, remainingDays: 5 }, cycleEnd: "2026-09-24" }),
+      React.createElement(TodayDashboard, { result: { ...base, remainingDays: 5 }, cycleEnd: "2026-09-25" }),
     );
     expect(screen.getByText("D-5")).toBeInTheDocument();
     expect(screen.queryByText("내일 월급날이에요")).toBeNull();
@@ -199,7 +199,7 @@ describe("Home Page & Today Dashboard", () => {
           tomorrowBudget: 40000,
           yesterdayCarry: -3000,
         },
-        cycleEnd: "2026-09-24",
+        cycleEnd: "2026-09-25",
       }),
     );
     const over = screen.getByText(/5,000원 초과했어요/);
@@ -219,7 +219,7 @@ describe("Home Page & Today Dashboard", () => {
           tomorrowBudget: 60000,
           yesterdayCarry: null,
         },
-        cycleEnd: "2026-09-24",
+        cycleEnd: "2026-09-25",
       }),
     );
     expect(screen.queryByText(/초과했어요/)).toBeNull();

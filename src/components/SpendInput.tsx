@@ -14,7 +14,7 @@ interface SpendInputProps {
   onToast: (msg: string) => void;
 }
 
-const QUICK_AMOUNTS = [5000, 10000, 30000, 50000];
+const QUICK_AMOUNTS = [5000, 10000, 30000];
 const MAX_SPEND = 10_000_000;
 const RANGE_HELP = '1원 ~ 10,000,000원 사이로 입력해 주세요';
 

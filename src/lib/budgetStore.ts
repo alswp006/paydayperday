@@ -148,11 +148,8 @@ function snapshot(): Snapshot {
   return { settings: asSettings(s.value), records: asRecords(r.value) };
 }
 
-function withToday(snap: Snapshot, today: string, entries: number[], opts?: { useFullBudget?: boolean }): Snapshot {
-  let budget = 0;
-  if (snap.settings) {
-    budget = opts?.useFullBudget ? snap.settings.cycleBudget : computeDaily(snap.settings, snap.records, today).todayBudget;
-  }
+function withToday(snap: Snapshot, today: string, entries: number[]): Snapshot {
+  const budget = snap.settings ? computeDaily(snap.settings, snap.records, today).todayBudget : 0;
   const rec: DayRecord = { date: today, entries, budget };
   return { settings: snap.settings, records: { ...snap.records, [today]: rec } };
 }
@@ -171,8 +168,9 @@ export function saveSettings(
     cycleStart,
     cycleEnd: nextPayday(today, paydayDay),
   };
-  const entries = snap.records[today]?.entries ?? [];
-  return commit(withToday({ settings, records: snap.records }, today, entries, { useFullBudget: true }), today);
+  const existing = snap.records[today];
+  if (!existing) return commit({ settings, records: snap.records }, today);
+  return commit(withToday({ settings, records: snap.records }, today, existing.entries), today);
 }
 
 export function addSpend(amount: number): SaveResult {

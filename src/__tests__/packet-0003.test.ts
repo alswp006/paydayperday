@@ -129,20 +129,15 @@ describe("Storage Layer & Number Input Normalizer [Packet 0003]", () => {
       }
     });
 
-    it("should save today's budget to records[today].budget", async () => {
+    it("should not create a today record when saving settings without any entry", async () => {
       (vi.mocked(storage.getItem) as any).mockReturnValue(JSON.stringify({}));
 
       await saveSettings(1, 5000000, { newCycle: true });
 
       const setCalls = (vi.mocked(storage.setItem) as any).mock.calls;
       const recordsCall = setCalls.find((c: any) => c[0] === "ppd:records");
-
       expect(recordsCall).toBeDefined();
-      if (recordsCall) {
-        const saved = JSON.parse(recordsCall[1]);
-        expect(saved["2026-09-20"]).toBeDefined();
-        expect(saved["2026-09-20"].budget).toBe(5000000);
-      }
+      expect(JSON.parse(recordsCall[1])["2026-09-20"]).toBeUndefined();
     });
 
     it("should not modify localStorage on write failure", async () => {

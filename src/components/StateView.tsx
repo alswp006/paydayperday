@@ -19,7 +19,7 @@ export function EmptyState({
   icon?: ReactNode;
   title: ReactNode;
   description?: ReactNode;
-  /** 보조 액션 — <Button variant="weak" .../> 권장. 1차 CTA와 중복 금지. */
+  /** 보조 액션 — variant="weak" Button 권장. 1차 CTA와 중복 금지. */
   action?: ReactNode;
   testId?: string;
 }) {

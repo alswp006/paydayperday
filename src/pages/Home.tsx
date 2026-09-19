@@ -48,7 +48,7 @@ export default function Home() {
         action={
           // 라벨은 앱의 핵심 행동 동사로 교체하라 — "연봉 계산하기"/"기록 남기기" 등.
           // generic "시작하기"/"확인"은 카피 규칙 위반. onClick도 실제 첫 화면 경로로.
-          <Button variant="fill" display="block" onClick={() => navigate('/')}>
+          <Button variant="fill" display="block" aria-label="첫 결과 보기" onClick={() => navigate('/')}>
             첫 결과 보기
           </Button>
         }

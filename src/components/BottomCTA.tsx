@@ -19,10 +19,15 @@ function fireHaptic(type: "success" | "tickWeak") {
  *
  * Pre-built (재구현 금지): 폼 제출/다음 단계 등 화면의 1차 액션에 사용.
  * ⚠️ FixedBottomCTA는 그 자체가 <button>이다(.d.ts: HTMLButtonElement ref). 안에 또
- *   <Button>을 넣으면 <button><button>(무효 HTML/validateDOMNesting) → children에 라벨을 직접.
+ *   Button을 넣으면 <button><button>(무효 HTML/validateDOMNesting) → children에 라벨을 직접.
  * 탭 루트(하단 TabBar가 있는 메인 탭)에는 쓰지 마라 — 탭바와 겹친다. 그 경우 SummaryHero
  * 카드 내부 진입 버튼을 사용한다(역할 분리). 클릭 시 success 햅틱이 자동 발화된다.
  */
+// 라벨이 문자열일 때만 aria-label로 노출 — 노드 라벨은 버튼 텍스트가 접근성 이름이 된다.
+function textLabel(label: ReactNode): string | undefined {
+  return typeof label === "string" ? label : undefined;
+}
+
 export function SubmitFooter({
   label,
   onClick,
@@ -77,6 +82,7 @@ export function ButtonStack({
       <Button
         variant="fill"
         display="block"
+        aria-label={textLabel(primary.label)}
         onClick={() => {
           fireHaptic("success");
           primary.onClick();
@@ -89,6 +95,7 @@ export function ButtonStack({
         <Button
           variant="weak"
           display="block"
+          aria-label={textLabel(secondary.label)}
           onClick={() => {
             fireHaptic("tickWeak");
             secondary.onClick();

@@ -14,7 +14,7 @@ import { Card } from "./Card";
  *     label="총 부채"
  *     value={<Amount value={15000000} unit="원" typography="t1" />}
  *     caption="2건"
- *     action={<Button variant="fill" display="block" onClick={...}>시뮬레이션 시작</Button>}
+ *     action={(Button variant="fill" display="block" aria-label="시뮬레이션 시작")}
  *   />
  */
 export function SummaryHero({
@@ -29,7 +29,7 @@ export function SummaryHero({
   /** 보통 <Amount .../> 또는 강조 텍스트(typography t1~t2) */
   value: ReactNode;
   caption?: ReactNode;
-  /** 카드 내 1차 진입 버튼(예: <Button display="block">). 탭-루트의 진입 액션. */
+  /** 카드 내 1차 진입 버튼(예: display="block" Button). 탭-루트의 진입 액션. */
   action?: ReactNode;
   /** AI 생성 결과면 true → "AI가 생성한 결과입니다" 라벨 표시(고지 의무) */
   ai?: boolean;

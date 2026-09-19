@@ -1,0 +1,23 @@
+{
+  "koreanName": "월급계기판",
+  "englishName": "PaydayPerDay",
+  "appName": "payday-per-day",
+  "ageRating": "만 19세 이상",
+  "supportEmail": "support@aifactory.dev",
+  "category": {
+    "primary": "생활",
+    "secondary": "금융"
+  },
+  "subtitle": "월급까지 남은 하루 예산을 매일 확인",
+  "description": "월급날과 이번 달 쓸 수 있는 총액을 입력하면 오늘의 하루 예산이 자동으로 계산됩니다. 매일 쓴 돈을 기록하면 남은 돈이 다음 날 예산에 반영되어 내일부터의 하루 예산이 재계산됩니다. 결산 리포트에서는 오늘 남긴 돈, 내일 예산, 주간 예산 준수 현황과 연속 준수 일수를 확인할 수 있습니다. 광고를 시청하면 결산 리포트를 열람할 수 있습니다.",
+  "searchKeywords": [
+    "월급 예산",
+    "하루 생활비",
+    "급여 관리",
+    "월급관리",
+    "지출 기록",
+    "예산 계획",
+    "돈 관리",
+    "가계부"
+  ]
+}

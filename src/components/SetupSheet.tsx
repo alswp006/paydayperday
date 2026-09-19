@@ -102,7 +102,7 @@ export default function SetupSheet({ open, initial, onSave, onClose }: SetupShee
         aria-label="월급날"
       />
       <Spacing size={8} />
-      <div style={{ display: 'flex', gap: 8, overflowX: 'auto' }}>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {DAY_CHIPS.map((c) => (
           <Chip key={c.label} onClick={() => pickDay(c.value)}>
             {c.label}

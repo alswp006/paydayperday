@@ -85,13 +85,15 @@ export default function SpendInput({ entriesCount, onRecord, onNoSpend, onUndo, 
         aria-label="오늘 지출 금액"
       />
       <Spacing size={8} />
-      <div style={{ display: 'flex', gap: 8, overflowX: 'auto' }}>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {QUICK_AMOUNTS.map((n) => (
           <Chip key={n} onClick={() => addQuick(n)}>
             {`+${formatNumber(n)}`}
           </Chip>
         ))}
       </div>
+      <Spacing size={8} />
+      <Paragraph.Text typography="st13">칩을 누르면 금액이 더해져요. 아래 기록하기를 눌러야 저장돼요</Paragraph.Text>
       <Spacing size={12} />
       <Button variant="fill" size="large" display="block" disabled={invalid} onClick={handleRecord} aria-label="기록하기">
         기록하기

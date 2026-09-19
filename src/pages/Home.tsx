@@ -109,11 +109,7 @@ export default function Home() {
     body = (
       <EmptyState
         title="월급날까지 하루 예산을 계산해 드릴게요"
-        action={
-          <Button variant="weak" onClick={openSheet} aria-label="시작하기">
-            시작하기
-          </Button>
-        }
+        description="월급일과 이번 달 예산만 알려 주세요"
       />
     );
   } else if (expired) {
@@ -162,6 +158,8 @@ export default function Home() {
       bottom={
         active ? (
           <SubmitFooter label="오늘 결산 보기" onClick={goResult} disabled={!records[today]} />
+        ) : snap.ok && !settings ? (
+          <SubmitFooter label="시작하기" onClick={openSheet} />
         ) : undefined
       }
     >

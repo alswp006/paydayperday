@@ -12,14 +12,27 @@ import { test, expect, type Page } from "@playwright/test";
  */
 const ROUTES: { path: string; name: string }[] = [
   { path: "/", name: "home" },
-  // { path: "/result", name: "result" },   // ← 이 앱의 라우트를 추가
+  { path: "/result", name: "result" },
   // { path: "/settings", name: "settings" },
 ];
 
 /** 데이터가 필요한 화면용 localStorage 시드(앱에 맞게 채워라). 앱 스크립트보다 먼저 실행된다. */
 async function seed(page: Page): Promise<void> {
   await page.addInitScript(() => {
-    // window.localStorage.setItem("MY_STORAGE_KEY", JSON.stringify({ /* ... */ }));
+    if (window.location.pathname !== "/result") return;
+    const key = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const now = new Date();
+    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 15);
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 10);
+    window.localStorage.setItem(
+      "ppd:settings",
+      JSON.stringify({ paydayDay: end.getDate(), cycleBudget: 1500000, cycleStart: key(start), cycleEnd: key(end) }),
+    );
+    window.localStorage.setItem(
+      "ppd:records",
+      JSON.stringify({ [key(now)]: { date: key(now), entries: [12000, 8000], budget: 60000 } }),
+    );
   });
 }
 

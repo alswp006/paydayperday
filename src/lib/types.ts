@@ -45,7 +45,10 @@ export interface RouteState {
   input: AppInput;
 }
 
-export type SaveResult = { ok: true } | { ok: false; reason: 'quota' | 'unknown' };
+export type SaveResult = {
+  ok: boolean;
+  reason?: 'quota' | 'unknown';
+};
 
 export const STORAGE_KEYS = {
   settings: 'ppd:settings',

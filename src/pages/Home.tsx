@@ -1,73 +1,190 @@
-import { Top, Paragraph, Spacing, ListRow, Button } from '@toss/tds-mobile';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ScreenScaffold } from '../components/ScreenScaffold';
-import { SummaryHero } from '../components/SummaryHero';
-import { Card } from '../components/Card';
+import { AlertDialog, Button, Paragraph, Skeleton, Spacing, Toast, Top } from '@toss/tds-mobile';
+import { generateHapticFeedback } from '@apps-in-toss/web-framework';
+import { ScreenScaffold } from '@/components/ScreenScaffold';
+import { SubmitFooter } from '@/components/BottomCTA';
+import { EmptyState } from '@/components/StateView';
+import SetupSheet from '@/components/SetupSheet';
+import SpendInput from '@/components/SpendInput';
+import TodayDashboard from '@/components/TodayDashboard';
+import { addSpend, load, markNoSpend, resetAll, saveSettings, undoLastSpend } from '@/lib/budgetStore';
+import { computeDaily } from '@/lib/calculator';
+import { calcStreak, weekStatus } from '@/lib/streak';
+import { toDateKey } from '@/lib/date';
+import type { RouteState, SaveResult } from '@/lib/types';
 
-/**
- * Golden Home page — 대시보드/탭-루트 골든 레퍼런스.
- *
- * 다른 페이지를 쓸 때 이 패턴을 모방하라:
- * - ScreenScaffold로 감싼다(raw fragment 골격 금지) — safe-area + 100dvh 자동 처리.
- * - 화면 최상단에 SummaryHero로 시각 앵커를 만든다('휑함'의 가장 큰 원인은 앵커 부재).
- *   데이터가 있으면 value에 <Amount value={n} unit="원" typography="t1" />로 핵심 숫자를 크게 박아라.
- * - 1차 진입 액션은 SummaryHero 카드 내부 버튼(display="block", 전체폭)에 둔다.
- *   → 화면 중앙 부유/좌측 글자폭 버튼 금지. 하단 TabBar가 있으면 SubmitFooter와 겹치므로 카드 안에.
- * - 핵심 정보는 raw <div>가 아니라 Card로 묶어 위계를 만든다.
- * - 하단 탭이 필요하면(2~5탭): bottom={<FloatingTabBar items={[{label,path}...]} />}.
- *   ('TDS TabBar'는 존재하지 않는다 — 직접 만들지 말고 FloatingTabBar를 써라.)
- * - 카피는 CLAUDE.md "카피 규칙 — AI 냄새 금지"를 따른다: 기능 나열식 홍보 문구·상투구·
- *   generic 버튼("시작하기") 금지. 이 파일의 예시 문구도 앱 맥락에 맞게 교체 대상이다.
- *
- * Scaffold tokens (replaced by scaffold-toss.ts at project creation):
- *   PaydayPerDay -> the app's display name
- *   다음 월급날까지 D-11, 오늘 쓸 수 있는 돈은 38,000원. 매일 열어 보는 하루 생활비 계기판    -> the one-line description
- */
+type Haptic = 'tickWeak' | 'tickMedium';
 
-// ⚠ 이 목록은 골격 예시다 — 앱의 실제 콘텐츠(핵심 지표·최근 기록·바로가기)로 반드시 교체하라.
-// '간편한 사용/빠른 처리' 같은 기능 나열식 홍보 문구는 카피 규칙(CLAUDE.md "AI 냄새 금지") 위반이다.
-// 사용자가 이 화면에서 실제로 확인할 정보를 넣어라 — 아래처럼 데이터가 사는 행으로.
-const HIGHLIGHTS = [
-  { title: '오늘', description: '아직 기록이 없어요' },
-  { title: '이번 주', description: '기록 3건 · 평균 12분' },
-];
+function haptic(type: Haptic) {
+  try {
+    Promise.resolve(generateHapticFeedback({ type })).catch(() => {});
+  } catch {
+    /* 네이티브 브릿지 없는 환경 */
+  }
+}
+
+const QUOTA_MSG = '저장 공간이 부족해요. 기록을 초기화하면 다시 저장할 수 있어요';
+const UNKNOWN_MSG = '저장에 실패했어요. 다시 시도해 주세요';
 
 export default function Home() {
   const navigate = useNavigate();
+  const [snap, setSnap] = useState(() => load());
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [resetOpen, setResetOpen] = useState(false);
+  const [toast, setToast] = useState({ open: false, message: '' });
+
+  const showToast = (message: string) => setToast({ open: true, message });
+  const refresh = () => setSnap(load());
+  const failToast = (r: SaveResult) => showToast(r.reason === 'quota' ? QUOTA_MSG : UNKNOWN_MSG);
+
+  const openReset = () => setResetOpen(true);
+
+  const openSheet = () => {
+    haptic('tickWeak');
+    setSheetOpen(true);
+  };
+
+  const wrap = (fn: () => SaveResult) => () => {
+    const r = fn();
+    if (r.ok) refresh();
+    else failToast(r);
+    return r;
+  };
+  const wrapAmount = (amount: number) => wrap(() => addSpend(amount))();
+
+  const today = toDateKey(new Date());
+  const settings = snap.ok ? snap.settings : null;
+  const records = snap.ok ? snap.records : {};
+  const expired = !!settings && today >= settings.cycleEnd;
+  const active = !!settings && !expired;
+
+  const handleSave = (paydayDay: number, cycleBudget: number): SaveResult => {
+    const r = saveSettings(paydayDay, cycleBudget, { newCycle: !settings || expired });
+    if (r.ok) {
+      setSheetOpen(false);
+      refresh();
+      showToast('예산을 설정했어요');
+    } else {
+      failToast(r);
+    }
+    return r;
+  };
+
+  const handleReset = () => {
+    haptic('tickMedium');
+    resetAll();
+    setResetOpen(false);
+    refresh();
+  };
+
+  const goResult = () => {
+    if (!settings || !records[today]) return;
+    haptic('tickWeak');
+    const result = computeDaily(settings, records, today);
+    const state: RouteState = {
+      result: { ...result, week: weekStatus(records, today), streak: calcStreak(records, today) },
+      input: { settings, todaySpent: result.todaySpent },
+    };
+    navigate('/result', { state });
+  };
+
+  let body;
+  if (!snap.ok) {
+    body = (
+      <>
+        <Spacing size={24} />
+        <Paragraph.Text typography="t5">데이터를 불러오지 못했어요</Paragraph.Text>
+        <Spacing size={16} />
+        <Button variant="fill" display="block" onClick={refresh} aria-label="다시 시도">
+          다시 시도
+        </Button>
+        <Spacing size={8} />
+        <Button variant="weak" display="block" onClick={openReset} aria-label="초기화">
+          초기화
+        </Button>
+      </>
+    );
+  } else if (!settings) {
+    body = (
+      <EmptyState
+        title="월급날까지 하루 예산을 계산해 드릴게요"
+        action={
+          <Button variant="weak" onClick={openSheet} aria-label="시작하기">
+            시작하기
+          </Button>
+        }
+      />
+    );
+  } else if (expired) {
+    body = (
+      <>
+        <Spacing size={24} />
+        <Paragraph.Text typography="t5">월급날이 지났어요. 이번 달 예산을 새로 설정해 주세요</Paragraph.Text>
+        <Spacing size={16} />
+        <Button variant="fill" display="block" onClick={openSheet} aria-label="새로 설정하기">
+          새로 설정하기
+        </Button>
+      </>
+    );
+  } else {
+    const result = computeDaily(settings, records, today);
+    body = (
+      <>
+        <TodayDashboard result={result} cycleEnd={settings.cycleEnd} />
+        <Spacing size={24} />
+        <SpendInput
+          entriesCount={records[today]?.entries.length ?? 0}
+          onRecord={wrapAmount}
+          onNoSpend={wrap(markNoSpend)}
+          onUndo={wrap(undoLastSpend)}
+          onToast={showToast}
+        />
+        <div style={{ height: 'calc(88px + env(safe-area-inset-bottom))' }} />
+      </>
+    );
+  }
 
   return (
     <ScreenScaffold
-      top={<Top title={<Top.TitleParagraph>PaydayPerDay</Top.TitleParagraph>} />}
+      top={
+        <Top
+          title={<Top.TitleParagraph>PaydayPerDay</Top.TitleParagraph>}
+          right={
+            active ? (
+              <Button variant="weak" size="small" onClick={openSheet} aria-label="예산 수정">
+                예산 수정
+              </Button>
+            ) : undefined
+          }
+        />
+      }
+      bottom={
+        active ? (
+          <SubmitFooter label="오늘 결산 보기" onClick={goResult} disabled={!records[today]} />
+        ) : undefined
+      }
     >
-      {/* 시각 앵커: 헤드라인 + 카드 내 진입 버튼(부유 금지, display="block" 전체폭).
-          데이터 앱이면 value를 <Amount typography="t1" />(핵심 숫자)로 교체하라. */}
-      <SummaryHero
-        label="PaydayPerDay"
-        value={<Paragraph.Text typography="t2">다음 월급날까지 D-11, 오늘 쓸 수 있는 돈은 38,000원. 매일 열어 보는 하루 생활비 계기판</Paragraph.Text>}
-        caption="로그인 없이 바로 쓸 수 있어요"
-        action={
-          // 라벨은 앱의 핵심 행동 동사로 교체하라 — "연봉 계산하기"/"기록 남기기" 등.
-          // generic "시작하기"/"확인"은 카피 규칙 위반. onClick도 실제 첫 화면 경로로.
-          <Button variant="fill" display="block" aria-label="첫 결과 보기" onClick={() => navigate('/')}>
-            첫 결과 보기
-          </Button>
-        }
-        testId="home-hero"
+      {body}
+      <SetupSheet
+        open={sheetOpen}
+        initial={settings ? { paydayDay: settings.paydayDay, cycleBudget: settings.cycleBudget } : undefined}
+        onSave={handleSave}
+        onClose={() => setSheetOpen(false)}
       />
-
-      <Spacing size={24} />
-
-      {/* 핵심 정보는 Card로 묶기(raw div 금지) — 위계 생성 */}
-      <Card testId="home-highlights">
-        {HIGHLIGHTS.map((h, idx) => (
-          <ListRow
-            key={idx}
-            contents={<ListRow.Texts type="2RowTypeA" top={h.title} bottom={h.description} />}
-          />
-        ))}
-      </Card>
-
-      <Spacing size={24} />
+      <AlertDialog
+        open={resetOpen}
+        title="기록을 모두 지울까요?"
+        description="설정과 지출 기록이 모두 삭제돼요"
+        alertButton={<AlertDialog.AlertButton onClick={handleReset}>초기화</AlertDialog.AlertButton>}
+        onClose={() => setResetOpen(false)}
+      />
+      <Toast
+        position="bottom"
+        open={toast.open}
+        text={toast.message}
+        onClose={() => setToast({ open: false, message: toast.message })}
+      />
     </ScreenScaffold>
   );
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { ChangeEvent, FocusEvent } from 'react';
-import { BottomSheet, Button, Chip, Paragraph, Spacing, TextField } from '@toss/tds-mobile';
+import { BottomSheet, Chip, ChipItem, Spacing, TextField } from '@toss/tds-mobile';
 import { generateHapticFeedback } from '@apps-in-toss/web-framework';
 import { normalizeDigits } from '@/lib/numberInput';
 import { formatNumber } from '@/lib/utils';
@@ -84,13 +84,25 @@ export default function SetupSheet({ open, initial, onSave, onClose }: SetupShee
   const showDayError = dayTouched && !dayValid;
   const showBudgetError = budgetTouched && !budgetValid;
 
+  // 제목은 BottomSheet.Header(TDS 기본 좌우 24px 인셋) — children으로 넣으면 시트 가장자리에 붙는다.
   return (
-    <BottomSheet open={open} onClose={onClose}>
-      <Paragraph.Text typography="t4">예산 설정</Paragraph.Text>
+    <BottomSheet
+      open={open}
+      onClose={onClose}
+      header={<BottomSheet.Header>예산 설정</BottomSheet.Header>}
+      // 저장은 cta 슬롯(BottomSheet.CTA) — children의 맨 Button은 시트 좌우 가장자리에 붙었다(제목·칸은 20~24px 인셋).
+      cta={
+        <BottomSheet.CTA disabled={!dayValid || !budgetValid} onClick={handleSave} aria-label="저장">
+          저장
+        </BottomSheet.CTA>
+      }
+    >
       <Spacing size={16} />
+      {/* labelOption="sustain": 빈 칸에서도 라벨을 계속 보여 준다(기본 'appear'는 값이 있을 때만 — 두 칸이 placeholder만으로 구분됐다). */}
       <TextField
         variant="box"
         label="월급날"
+        labelOption="sustain"
         placeholder="예: 25"
         inputMode="numeric"
         enterKeyHint="next"
@@ -102,17 +114,22 @@ export default function SetupSheet({ open, initial, onSave, onClose }: SetupShee
         aria-label="월급날"
       />
       <Spacing size={8} />
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        {DAY_CHIPS.map((c) => (
-          <Chip key={c.label} onClick={() => pickDay(c.value)}>
-            {c.label}
-          </Chip>
-        ))}
-      </div>
+      {/* TDS Chip은 그룹 컨테이너(div), ChipItem이 개별 칩(button) — Chip을 칩마다 쓰면 알약이 아니라 맨 텍스트로 렌더된다. */}
+      <Chip wrap>
+        {DAY_CHIPS.map((c) => {
+          const selected = dayNum === c.value;
+          return (
+            <ChipItem key={c.label} selected={selected} aria-pressed={selected} onClick={() => pickDay(c.value)}>
+              {c.label}
+            </ChipItem>
+          );
+        })}
+      </Chip>
       <Spacing size={20} />
       <TextField
         variant="box"
         label="이번 달 쓸 수 있는 총액"
+        labelOption="sustain"
         placeholder="예: 3,000,000"
         inputMode="numeric"
         enterKeyHint="done"
@@ -123,17 +140,6 @@ export default function SetupSheet({ open, initial, onSave, onClose }: SetupShee
         hasError={showBudgetError}
         aria-label="이번 달 쓸 수 있는 총액"
       />
-      <Spacing size={24} />
-      <Button
-        variant="fill"
-        size="xlarge"
-        display="block"
-        disabled={!dayValid || !budgetValid}
-        onClick={handleSave}
-        aria-label="저장"
-      >
-        저장
-      </Button>
       <Spacing size={16} />
     </BottomSheet>
   );

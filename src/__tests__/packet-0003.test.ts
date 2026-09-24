@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   load,
   saveSettings,
@@ -229,6 +229,15 @@ describe("Storage Layer & Number Input Normalizer [Packet 0003]", () => {
   // Ad unlock tracking
   // ============================================================
   describe("Ad unlock tracking", () => {
+    // '오늘'을 2026-09-20으로 고정한다 — 고정 없이 날짜 리터럴과 new Date()를 비교하면 그날 하루만 초록이다.
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date(2026, 8, 20, 12, 0, 0));
+    });
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
     it("should return false when ad not unlocked today", () => {
       (vi.mocked(storage.getItem) as any).mockReturnValue(null);
       expect(isAdUnlockedToday()).toBe(false);

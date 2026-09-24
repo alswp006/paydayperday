@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import React from "react";
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import fs from "node:fs";
+import path from "node:path";
 import type { BudgetSettings, RecordMap, SaveResult } from "@/lib/types";
 
 const mockNavigate = vi.fn();
@@ -121,6 +123,17 @@ afterEach(() => {
 });
 
 describe("Home Page & Today Dashboard", () => {
+  it("UX(P4): 상단 타이틀은 콘솔 등록 한국어 앱 이름(매니페스트 koreanName)이다 — 영어 코드명 아님", () => {
+    const manifest = JSON.parse(
+      fs.readFileSync(path.resolve(__dirname, "../../artifacts/apps-in-toss-manifest.json"), "utf8"),
+    );
+    expect(manifest.koreanName).toBe("월급계기판");
+    renderHome();
+    const nav = screen.getByRole("navigation");
+    expect(within(nav).getByRole("heading", { level: 1 }).textContent).toBe(manifest.koreanName);
+    expect(screen.queryByText("PaydayPerDay")).toBeNull();
+  });
+
   it("AC-1[P0]: 설정이 없으면 EmptyState와 '시작하기'가 보이고, 저장하면 Toast 후 대시보드로 바뀐다", () => {
     renderHome();
     expect(screen.getByText("월급날까지 하루 예산을 계산해 드릴게요")).toBeInTheDocument();

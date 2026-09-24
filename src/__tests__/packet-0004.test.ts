@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 const mockNavigate = vi.fn();
@@ -18,21 +18,39 @@ vi.mock("@toss/tds-mobile", async () => {
   const R = await import("react");
   const h = R.createElement;
   return {
+    // header 슬롯은 TDS처럼 children과 분리해 렌더한다(제목 인셋은 BottomSheet.Header가 준다).
     BottomSheet: Object.assign(
-      ({ open, children }: any) => (open ? h("div", { role: "dialog" }, children) : null),
-      { Header: ({ children }: any) => h("div", null, children) },
+      ({ open, header, cta, children }: any) =>
+        open
+          ? h(
+              "div",
+              { role: "dialog" },
+              header ? h("header", { "data-testid": "sheet-header" }, header) : null,
+              children,
+              cta ? h("footer", { "data-testid": "sheet-cta" }, cta) : null,
+            )
+          : null,
+      {
+        Header: ({ children }: any) => h("h2", null, children),
+        CTA: ({ children, onClick, disabled, ...p }: any) =>
+          h("button", { type: "button", onClick, disabled: disabled || undefined, ...p }, children),
+      },
     ),
-    TextField: R.forwardRef(({ label, help, hasError, variant, suffix, prefix, ...props }: any, ref: any) =>
-      h(
-        "div",
-        null,
-        h("label", null, label),
-        h("input", { ref, ...props }),
-        help ? h("span", { "data-help": hasError ? "error" : "info" }, help) : null,
-      ),
+    // TDS labelOption 동작 모사(설치본 d.ts): 기본 'appear'는 value가 있을 때만 라벨, 'sustain'은 항상 라벨.
+    TextField: R.forwardRef(
+      ({ label, labelOption, help, hasError, variant, suffix, prefix, ...props }: any, ref: any) =>
+        h(
+          "div",
+          null,
+          label && (labelOption === "sustain" || props.value) ? h("label", null, label) : null,
+          h("input", { ref, ...props }),
+          help ? h("span", { "data-help": hasError ? "error" : "info" }, help) : null,
+        ),
     ),
-    Chip: ({ children, onClick, active, selected }: any) =>
-      h("button", { type: "button", "aria-pressed": !!(active ?? selected), onClick }, children),
+    // TDS Chip = 그룹 컨테이너(div), ChipItem = 개별 칩(button). Chip을 칩마다 쓰면 버튼이 생기지 않는다.
+    Chip: ({ children }: any) => h("div", { "data-testid": "chip-group" }, children),
+    ChipItem: ({ children, onClick, selected, disabled, ...p }: any) =>
+      h("button", { type: "button", "data-selected": selected ? "true" : "false", onClick, ...p }, children),
     Button: ({ children, onClick, disabled, loading, display, variant, size, color, ...props }: any) =>
       h("button", { type: "button", onClick, disabled: disabled || undefined, ...props }, children),
     FixedBottomCTA: ({ children, onClick, disabled }: any) =>
@@ -101,6 +119,68 @@ describe("Setup Sheet & Spend Input Components", () => {
     expect(saveBtn().disabled).toBe(false);
     fireEvent.click(saveBtn());
     expect(onSave).toHaveBeenCalledWith(31, 3000000);
+  });
+
+  it("UX(P1): 빈 칸에서도 두 필드의 라벨이 보인다(placeholder만으로 구분하지 않는다)", () => {
+    renderSheet();
+    expect(payday().value).toBe("");
+    expect(total().value).toBe("");
+    expect(screen.getByText("월급날")).toBeInTheDocument();
+    expect(screen.getByText("이번 달 쓸 수 있는 총액")).toBeInTheDocument();
+    expect(payday().getAttribute("placeholder")).toBe("예: 25");
+    expect(total().getAttribute("placeholder")).toBe("예: 3,000,000");
+  });
+
+  it("UX(P2): 월급날 칩은 한 그룹 안의 개별 버튼이고, 입력된 월급날과 같은 칩만 선택 상태다", () => {
+    renderSheet();
+    const group = screen.getByTestId("chip-group");
+    const chips = within(group).getAllByRole("button");
+    expect(chips.map((c) => c.textContent)).toEqual(["10일", "15일", "21일", "25일", "말일"]);
+    const selectedLabels = () =>
+      chips.filter((c) => c.getAttribute("data-selected") === "true").map((c) => c.textContent);
+    expect(selectedLabels()).toEqual([]);
+
+    fireEvent.click(within(group).getByRole("button", { name: "25일" }));
+    expect(payday().value).toBe("25");
+    expect(selectedLabels()).toEqual(["25일"]);
+    expect(within(group).getByRole("button", { name: "25일" }).getAttribute("aria-pressed")).toBe("true");
+    expect(within(group).getByRole("button", { name: "10일" }).getAttribute("aria-pressed")).toBe("false");
+
+    // 직접 입력도 선택 상태에 반영된다 — 칩에 없는 날짜면 아무것도 선택되지 않는다
+    fireEvent.change(payday(), { target: { value: "10" } });
+    expect(selectedLabels()).toEqual(["10일"]);
+    fireEvent.change(payday(), { target: { value: "24" } });
+    expect(selectedLabels()).toEqual([]);
+    fireEvent.change(payday(), { target: { value: "31" } });
+    expect(selectedLabels()).toEqual(["말일"]);
+  });
+
+  it("UX(P2): 기존 설정으로 열면 저장된 월급날 칩이 선택돼 있다", () => {
+    wrap(
+      React.createElement(SetupSheet, {
+        open: true,
+        initial: { paydayDay: 15, cycleBudget: 2000000 },
+        onSave: vi.fn(() => ({ ok: true })),
+        onClose: vi.fn(),
+      }),
+    );
+    expect(screen.getByRole("button", { name: "15일" }).getAttribute("data-selected")).toBe("true");
+    expect(screen.getByRole("button", { name: "25일" }).getAttribute("data-selected")).toBe("false");
+  });
+
+  it("UX(P3): 시트 제목은 BottomSheet header 슬롯(BottomSheet.Header)으로 렌더된다", () => {
+    renderSheet();
+    const header = screen.getByTestId("sheet-header");
+    expect(within(header).getByRole("heading", { name: "예산 설정" })).toBeInTheDocument();
+    // 본문(children)에 제목이 중복으로 남아 있지 않다
+    expect(screen.getAllByText("예산 설정")).toHaveLength(1);
+  });
+
+  it("UX: 저장 버튼은 BottomSheet cta 슬롯(BottomSheet.CTA)에 있다 — 본문에 맨 버튼으로 두면 시트 가장자리에 붙는다", () => {
+    renderSheet();
+    const cta = screen.getByTestId("sheet-cta");
+    expect(within(cta).getByRole("button", { name: /저장/ })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /저장/ })).toHaveLength(1);
   });
 
   it("AC-2[P0]: 총액에 '$5,000'을 붙여넣으면 '5,000'으로 보이고 두 필드는 numeric + aria-label", () => {

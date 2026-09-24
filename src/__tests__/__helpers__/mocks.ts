@@ -147,9 +147,13 @@ export function mockTds() {
       React.createElement("div", { "data-slot": "bottom-cta" }, children),
 
     BottomSheet: Object.assign(
-      ({ children, open }: any) =>
-        open ? React.createElement("div", { role: "dialog" }, children) : null,
-      { Header: ({ children }: any) => React.createElement("div", null, children) },
+      ({ children, open, header, cta }: any) =>
+        open ? React.createElement("div", { role: "dialog" }, header ?? null, children, cta ?? null) : null,
+      {
+        Header: ({ children }: any) => React.createElement("div", null, children),
+        CTA: ({ children, onClick, disabled, ...p }: any) =>
+          React.createElement("button", { type: "button", onClick, disabled: disabled || undefined, ...p }, children),
+      },
     ),
 
     Chip: ({ children, selected, onClick }: any) =>

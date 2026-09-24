@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ChangeEvent, FocusEvent } from 'react';
-import { Button, Chip, Paragraph, Spacing, TextField } from '@toss/tds-mobile';
+import { Button, Chip, ChipItem, Paragraph, Spacing, TextField } from '@toss/tds-mobile';
 import { generateHapticFeedback } from '@apps-in-toss/web-framework';
 import { normalizeDigits } from '@/lib/numberInput';
 import { formatCurrency, formatNumber } from '@/lib/utils';
@@ -85,13 +85,14 @@ export default function SpendInput({ entriesCount, onRecord, onNoSpend, onUndo, 
         aria-label="오늘 지출 금액"
       />
       <Spacing size={8} />
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+      {/* TDS Chip은 그룹(div), ChipItem이 개별 칩(button). 더하기 칩은 선택 상태가 없는 kind="action". */}
+      <Chip kind="action" wrap>
         {QUICK_AMOUNTS.map((n) => (
-          <Chip key={n} onClick={() => addQuick(n)}>
+          <ChipItem key={n} onClick={() => addQuick(n)}>
             {`+${formatNumber(n)}`}
-          </Chip>
+          </ChipItem>
         ))}
-      </div>
+      </Chip>
       <Spacing size={8} />
       <Paragraph.Text typography="st13">칩을 누르면 금액이 더해져요. 아래 기록하기를 눌러야 저장돼요</Paragraph.Text>
       <Spacing size={12} />

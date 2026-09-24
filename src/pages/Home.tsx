@@ -145,7 +145,7 @@ export default function Home() {
     <ScreenScaffold
       top={
         <Top
-          title={<Top.TitleParagraph>PaydayPerDay</Top.TitleParagraph>}
+          title={<Top.TitleParagraph>월급계기판</Top.TitleParagraph>}
           right={
             active ? (
               <Button variant="weak" size="small" onClick={openSheet} aria-label="예산 수정">

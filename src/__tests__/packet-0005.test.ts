@@ -216,7 +216,8 @@ describe("Home Page & Today Dashboard", () => {
       }),
     );
     const over = screen.getByText(/5,000원 초과했어요/);
-    expect(over.closest('[style*="red"],[color*="red"]')).not.toBeNull();
+    // 빨강은 실재하는 TDS 토큰이어야 한다 — --tds-color-red500은 어디에도 정의되지 않아 실기기에선 상속색이었다.
+    expect(over.closest('[style*="--adaptiveRed500"],[color*="--adaptiveRed500"]')).not.toBeNull();
     expect(screen.getByText("이번 달 예산을 12,000원 넘겼어요")).toBeInTheDocument();
   });
 

@@ -29,7 +29,7 @@ export function WeekStreak({ week, streak }: WeekStreakProps) {
     <div data-testid="week-streak">
       <Paragraph.Text typography="t4">이번 주 예산 준수</Paragraph.Text>
       <Spacing size={4} />
-      <Paragraph.Text typography="t7" color="secondary">
+      <Paragraph.Text typography="t7" color="var(--adaptiveGrey600, gray)">
         {formatNumber(streak)}일 연속 예산 지킴
       </Paragraph.Text>
       <Spacing size={12} />
@@ -51,10 +51,10 @@ export function WeekStreak({ week, streak }: WeekStreakProps) {
                 alignItems: 'center',
                 justifyContent: 'center',
                 borderRadius: 12,
-                backgroundColor: 'var(--tds-color-grey50)',
+                backgroundColor: 'var(--adaptiveGrey100, whitesmoke)',
               }}
             >
-              <Paragraph.Text typography="st13" color="tertiary">
+              <Paragraph.Text typography="st13" color="var(--adaptiveGrey500, darkgray)">
                 {name}
               </Paragraph.Text>
               <Paragraph.Text typography="st6">{s.mark}</Paragraph.Text>
@@ -63,7 +63,7 @@ export function WeekStreak({ week, streak }: WeekStreakProps) {
         })}
       </div>
       <Spacing size={8} />
-      <Paragraph.Text typography="t7" color="secondary">
+      <Paragraph.Text typography="t7" color="var(--adaptiveGrey600, gray)">
         이번 주 {formatNumber(kept)}/7일 준수
       </Paragraph.Text>
     </div>

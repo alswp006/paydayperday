@@ -104,6 +104,17 @@ describe("Storage Layer & Number Input Normalizer [Packet 0003]", () => {
   // AC-3: Data persistence and cleanup
   // ============================================================
   describe("AC-3: Data persistence and automatic cleanup", () => {
+    // '오늘'을 2026-09-20으로 고정한다 — load()/saveSettings()는 new Date()로 오늘을 정하는데
+    // 아래 단언은 날짜 리터럴 "2026-09-20"을 쓴다. 고정이 없으면 60일 보존 창을 벗어나는
+    // 2026-11-19 이후 정리 테스트가 빨개지고, 'today 레코드 미생성' 단언은 공허하게 초록이 된다.
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date(2026, 8, 20, 12, 0, 0));
+    });
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
     it("should clean up records older than 60 days on load", () => {
       const today = "2026-09-20";
       const ninetyDaysAgo = new Date("2026-09-20");

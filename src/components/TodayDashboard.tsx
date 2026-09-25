@@ -18,7 +18,7 @@ export default function TodayDashboard({ result, cycleEnd }: TodayDashboardProps
   return (
     <>
       <Spacing size={8} />
-      <Paragraph.Text typography="t6" color="secondary">
+      <Paragraph.Text typography="t6" color="var(--adaptiveGrey600, gray)">
         {remainingDays === 1 ? (
           '내일 월급날이에요'
         ) : (
@@ -45,7 +45,7 @@ export default function TodayDashboard({ result, cycleEnd }: TodayDashboardProps
               todayLeft >= 0 ? (
                 `${won(todayLeft)} 남았어요`
               ) : (
-                <span style={{ color: 'var(--tds-color-red500)' }}>{won(-todayLeft)} 초과했어요</span>
+                <span style={{ color: 'var(--adaptiveRed500, crimson)' }}>{won(-todayLeft)} 초과했어요</span>
               )
             }
           />
@@ -54,7 +54,7 @@ export default function TodayDashboard({ result, cycleEnd }: TodayDashboardProps
       {yesterdayCarry !== null && (
         <>
           <Spacing size={8} />
-          <Paragraph.Text typography="t7" color="tertiary">
+          <Paragraph.Text typography="t7" color="var(--adaptiveGrey500, darkgray)">
             {yesterdayCarry >= 0
               ? `어제 ${won(yesterdayCarry)} 남겨서 남은 날 예산에 더했어요`
               : `어제 ${won(-yesterdayCarry)} 초과해서 남은 날 예산에서 뺐어요`}

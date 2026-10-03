@@ -2,7 +2,7 @@
 // 각 패턴: { id, confidence, severity, appliesTo(file), message, scan(content)=>[{line,text}] }
 
 function hasAllowMarker(line) {
-  return /\/\/\s*gate-allow:/.test(line);
+  return /\/\/\s*gate-allow:|\/\*\s*gate-allow:/.test(line);
 }
 
 /**

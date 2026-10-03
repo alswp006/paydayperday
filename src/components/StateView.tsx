@@ -39,7 +39,7 @@ export function EmptyState({
     >
       {icon}
       {icon ? <Spacing size={12} /> : null}
-      <Paragraph.Text typography="t4">{title}</Paragraph.Text>
+      <Paragraph.Text typography="t3">{title}</Paragraph.Text>
       {description ? (
         <>
           <Spacing size={12} />

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertDialog, Button, Paragraph, Skeleton, Spacing, Toast, Top } from '@toss/tds-mobile';
+import { AlertDialog, Asset, Button, Paragraph, Skeleton, Spacing, Toast, Top } from '@toss/tds-mobile';
 import { generateHapticFeedback } from '@apps-in-toss/web-framework';
 import { ScreenScaffold } from '@/components/ScreenScaffold';
 import { SubmitFooter } from '@/components/BottomCTA';
@@ -108,8 +108,9 @@ export default function Home() {
   } else if (!settings) {
     body = (
       <EmptyState
-        title="월급날까지 하루 예산을 계산해 드릴게요"
-        description="월급일과 이번 달 예산만 알려 주세요"
+        icon={<Asset.ContentIcon name="icon-coin-yellow" alt="" style={{ width: 64, height: 64 }} />}
+        title={<span style={{ whiteSpace: 'pre-line' }}>{'월급날까지\n하루 예산을 계산해 드릴게요'}</span>}
+        description="월급일 25일, 예산 150만 원처럼 알려 주세요"
       />
     );
   } else if (expired) {

@@ -1,102 +1,86 @@
 🇰🇷 [English](./README.md)
 
-# PaydayPerDay — 스마트 일일 예산 계산기
+# 월급계기판 — PaydayPerDay Spending Tracker for Toss
 
-급여일부터 급여일까지의 일일 지출 예산을 계산하는 토스 미니앱입니다. 급여일과 월간 예산을 한 번 설정한 후, 잔액 이월을 기반으로 자동 재계산되는 예산으로 일일 지출을 추적하면서 남은 자금이나 초과액을 남은 날짜에 재분배합니다.
+다음 급여일까지 하루에 안전하게 쓸 수 있는 금액을 자동으로 계산해주는 일일 예산 추적기입니다. 급여일과 월 예산을 한 번 설정하면, 지출을 기록하고 예산 준수 연속 기록이 늘어나는 모습을 확인하세요.
 
-급여 받은 후 과소비로 어려움을 겪는 20대~30대 한국 사용자를 위해 다음 급여일까지 현금 흐름을 관리할 수 있는 빠른 일일 지출 한도를 제공합니다.
+**대상 사용자**: 월급을 받는 직장인 중 다음 급여일 전에 과소비하는 것을 방지하고 싶은 사람들. **핵심 가치**: '급여일까지 11일 남음, 오늘 쓸 수 있는 금액 ₩38,000' 자동 계산 — 수동 계산 불필요.
 
-## 주요 기능
+## 기능
 
-- 📅 **예산 설정** — 급여일(1~31)과 월간 예산을 입력하면 앱이 일일 한도와 D-day 카운트다운을 자동 계산
-- 💰 **빠른 지출 기록** — 오늘의 지출을 한 번 기록하면 잔액 이월을 기반으로 내일 예산 자동 재계산
-- 📊 **일일 정산 리포트** — 오늘의 잔액, 내일의 예산, 주간 준수 스트릭(리워드 광고 시청 필요)을 확인
-- ✓ **주간 준수 추적** — 요일별 성공/실패/없음 상태를 추적하고 지속적인 예산 준수 스트릭 카운터
-- 💾 **로컬 저장** — 모든 데이터가 디바이스의 localStorage에 안전하게 저장; 백엔드 불필요
+- 🎯 **일일 예산 자동 계산** — 남은 예산을 남은 일수로 자동 분할하며, 지출할 때마다 다시 계산
+- 📝 **원클릭 지출 기록** — 빠른 단축키(+₩5K, +₩10K, +₩30K) 또는 직접 입력으로 지출 기록
+- 📊 **오늘의 정산** — 오늘의 초과/절약액, 내일의 예산, 주간 준수 현황 확인(✓ 성공 / ✕ 초과 / · 기록 없음)
+- 🔥 **예산 준수 연속 기록** — 일일 예산 범위 내 지출 연속일을 추적하며, 초과 시 리셋
+- 💾 **로컬 저장** — 모든 데이터를 브라우저에 저장(서버 불필요, 계정 불필요)
+- 🎬 **보상 광고 잠금** — 하루 한 번 광고를 보면 오늘의 정산 보고서 잠금 해제
+- ↩️ **취소 & 무지출 기록** — 마지막 지출 취소 또는 무지출 일을 기록
 
 ## 기술 스택
 
-- **프론트엔드**: React 18 + Vite
-- **라우터**: React Router 7
-- **UI 컴포넌트**: TDS Mobile (Toss Design System)
-- **네이티브 SDK**: @apps-in-toss/web-framework (햅틱 피드백, 리워드 광고, 네이티브 저장소)
-- **스타일링**: Emotion (CSS-in-JS)
-- **언어**: TypeScript
-- **저장소**: browser localStorage
-- **테스트**: Vitest + @testing-library/react + Playwright
+- **Frontend**: React 18, React Router 7.5, Vite 6.3
+- **UI**: Toss Design System (TDS) 모바일 컴포넌트, Emotion CSS-in-JS
+- **Runtime**: Apps-in-Toss SDK (미니앱 WebView, 네이티브 햅틱 피드백, 보상 광고)
+- **Storage**: 브라우저 localStorage (백엔드 없음)
+- **Icons**: Lucide React
 
 ## 시작하기
 
-### 필수 요구사항
-- Node.js 18+ (npm 또는 pnpm)
-
-### 설치
-
+### 의존성 설치
 ```bash
 npm install
 ```
 
 ### 프로덕션 빌드
-
 ```bash
 npx vite build
 ```
 
-최적화된 정적 번들을 `dist/`에 출력합니다.
+`dist/` 디렉토리에 정적 번들을 생성합니다. 이 앱은 클라이언트 사이드 Vite + React 빌드이며 서버 사이드 렌더링이 없습니다.
 
-### 토스(App-in-Toss)에 배포
-
+### Toss Apps-in-Toss에 배포
 ```bash
-npx ait build
-```
-
-그 후 [토스 개발자 콘솔](https://console.tossmini.com) 검수 절차에 따라 프로덕션에 배포합니다.
-
-### 테스트 실행
-
-```bash
-npx vitest run           # 유닛 테스트
-npm run test:visual      # 비주얼 회귀 테스트 (Playwright)
-npm run typecheck        # TypeScript 확인
+npx ait build      # Toss CDN용 번들링
+npx ait deploy     # 프로덕션으로 배포 (API 키 필요)
 ```
 
 ## 환경 변수
 
-| 변수 | 설명 | 필수 |
-|------|------|------|
-| `VITE_AIT_APP_NAME` | 토스 콘솔에 등록된 앱 이름 (`apps-in-toss.config.ts`에 설정) | 예 |
+환경변수가 필요하지 않습니다. 모든 설정(앱 이름, 브랜드 색상)은 빌드 시간에 `apps-in-toss.config.ts`에서 설정됩니다.
 
 ## 프로젝트 구조
 
 ```
 src/
-├── pages/               # 라우트 화면 (Home, Result)
-├── components/          # 재사용 가능한 UI 컴포넌트 (미리 만들어진 TDS 래퍼)
+├── pages/              # 페이지 컴포넌트 (Home, Result)
+├── components/         # UI 컴포넌트 (ScreenScaffold, SummaryHero 등)
 ├── lib/
-│   ├── calculator.ts    # 일일 예산 계산 (todayBudget, 이월금)
-│   ├── streak.ts        # 주간 준수 및 스트릭 계산
-│   ├── budgetStore.ts   # localStorage + 할당량 처리
-│   ├── date.ts          # 날짜 유틸리티 (cycleStart, cycleEnd, D-day)
-│   ├── types.ts         # 공유 TypeScript 인터페이스
-│   └── utils.ts         # 헬퍼 함수 (통화 포맷팅 등)
-└── __tests__/           # 유닛 & 컴포넌트 테스트
-
-.ai-factory/
-├── spec.md              # 전체 제품 사양
-├── apps-in-toss-essential.txt  # 검증된 SDK API 레퍼런스
-└── tds-reference.txt    # TDS 컴포넌트 문서
+│   ├── calculator.ts   # 일일 예산 & 연속 기록 로직
+│   ├── budgetStore.ts  # localStorage 래퍼
+│   ├── date.ts         # 날짜 유틸리티 (급여일 계산)
+│   ├── streak.ts       # 연속 기록 & 주간 상태
+│   └── types.ts        # 공유 TypeScript 타입
+├── __tests__/          # Vitest + React Testing Library 테스트
+└── App.tsx             # 라우터 & 최상위 레이아웃
 ```
+
+**주요 파일**:
+- `src/lib/calculator.ts` — 핵심 공식: `오늘의예산 = (전체예산 − 누적지출) / 남은일수` (100원 단위 반올림)
+- `src/lib/budgetStore.ts` — 영속 상태 (설정, 일일 기록, 광고 잠금 해제 상태)
+- `src/pages/Home.tsx` — 대시보드 (일일 예산, 지출 입력, 정산 버튼)
+- `src/pages/Result.tsx` — 정산 보고서 (주간 그리드, 연속 기록, 내일의 예산)
 
 ## 배포
 
-PaydayPerDay는 **토스 미니앱**(App-in-Toss)로 배포됩니다. 로컬에서 빌드한 후:
+이는 공식 Toss 모바일 앱 내에서 실행되는 **Apps-in-Toss 미니앱**입니다.
 
-1. `npx ait build`를 실행하여 토스 호환 번들 생성
-2. [토스 개발자 콘솔](https://console.tossmini.com)을 통해 번들 제출
-3. 토스 검수 통과 (만 19세 이상, 외부 링크 없음, 콘솔 에러 없음, CORS 에러 없음, 다크 모드 지원)
-4. 앱이 토스 CDN에서 호스팅되며 QR 코드 / 딥링크(`intoss://paydayperday`)를 통해 제공됨
+1. **앱 등록** — Toss 개발자 콘솔에서 `paydayperday`로 앱 등록
+2. **빌드**: `npx vite build` (또는 Toss 전용 번들의 경우 `npx ait build`)
+3. **로컬 테스트**: 콘솔에서 받은 QR 코드로 Toss 샌드박스에서 번들된 앱 열기
+4. **배포**: `npx ait deploy --api-key YOUR_KEY` (Toss CDN으로 배포)
+5. **검수**: Toss 팀이 규정 준수 여부를 검토합니다 (외부 링크 금지, TDS UI만 사용, 콘솔 에러 0개)
 
-참고: 로컬 개발 서버(`npm run dev`)는 문서화되지 않습니다. 검증은 `npm run test:visual`(Playwright)과 프로덕션 빌드를 통해 진행됩니다.
+성공하면 해당 앱은 공식 Toss 앱 스토어의 `intoss://paydayperday`에 나타납니다.
 
 ## 라이선스
 
